@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from db.connection import create_db_and_tables
 from contextlib import asynccontextmanager
-from routers.api import index
+from routers.routers import api_router
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @asynccontextmanager
@@ -11,9 +14,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(index.router)
+app.include_router(api_router)
 
 
 @app.get("/")
 async def read_root():
-    return {"Hello": "World"}
+    return {"Hello": "FastAPI"}
