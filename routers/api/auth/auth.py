@@ -10,15 +10,25 @@ from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 import jwt
 from jwt.exceptions import InvalidTokenError
-import os
-
-SECRET_KEY = os.getenv("AUTH_SECRET_KEY")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from constants.constants import (
+    ALREADY_REGISTERED_USER,
+    AUTH_GET_CURRENT_ACTIVE_USER,
+    AUTH_GET_CURRENT_USER,
+    AUTH_POST_REGISTER,
+    AUTH_POST_TOKEN,
+    AUTH_PREFIX,
+    INCORRECT_USERNAME_OR_PASSWORD,
+    INVALIDE_CREDENTIALS,
+    INACTIVE_USER,
+    SECRET_KEY,
+    ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    TOKEN_URL,
+)
 
 password_hash = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
-router = APIRouter(prefix="/auth")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=TOKEN_URL)
+router = APIRouter(prefix=AUTH_PREFIX)
 
 
 class Token(BaseModel):
@@ -74,7 +84,7 @@ async def get_current_user(
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail=INVALIDE_CREDENTIALS,
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -100,12 +110,12 @@ async def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail=INACTIVE_USER)
 
     return current_user
 
 
-@router.post("/token")
+@router.post(AUTH_POST_TOKEN)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep
 ) -> Token:
@@ -114,7 +124,7 @@ async def login_for_access_token(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail=INCORRECT_USERNAME_OR_PASSWORD,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -131,7 +141,7 @@ class UserModel(BaseModel):
     password: str
 
 
-@router.post("/register")
+@router.post(AUTH_POST_REGISTER)
 async def register(
     user: UserModel,
     session: SessionDep,
@@ -139,7 +149,7 @@ async def register(
     user_found = get_user(session, username=user.username)
 
     if user_found:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail=ALREADY_REGISTERED_USER)
 
     hashed_password = get_password_hash(user.password)
     new_user = User(
@@ -157,12 +167,12 @@ async def register(
     return new_user
 
 
-@router.get("/users/me")
+@router.get(AUTH_GET_CURRENT_USER)
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user
 
 
-@router.get("/users/me/items/")
+@router.get(AUTH_GET_CURRENT_ACTIVE_USER)
 async def read_own_items(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
