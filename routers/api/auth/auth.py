@@ -115,6 +115,18 @@ async def get_current_active_user(
     return current_user
 
 
+@router.get(AUTH_GET_CURRENT_USER)
+async def read_current_user(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user
+
+
+@router.get(AUTH_GET_CURRENT_ACTIVE_USER)
+async def read_current_active_user(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    return [{"owner": current_user.username, "info": current_user}]
+
+
 @router.post(AUTH_POST_TOKEN)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep
@@ -165,15 +177,3 @@ async def register(
     session.refresh(new_user)
 
     return new_user
-
-
-@router.get(AUTH_GET_CURRENT_USER)
-async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
-    return current_user
-
-
-@router.get(AUTH_GET_CURRENT_ACTIVE_USER)
-async def read_own_items(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-):
-    return [{"item_id": "Foo", "owner": current_user.username}]

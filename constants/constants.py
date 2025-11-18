@@ -19,12 +19,14 @@ TOKEN_URL = "/api/auth/token"
 # ENDPOINTS
 API_PREFIX = "/api"
 
+AUTH_ROUTER_TAG = "auth"
 AUTH_PREFIX = "/auth"
 AUTH_GET_CURRENT_USER = "/users/me"
 AUTH_GET_CURRENT_ACTIVE_USER = "/users/me/active"
 AUTH_POST_TOKEN = "/token"
 AUTH_POST_REGISTER = "/register"
 
+ITBANK_ROUTER_TAG = "itbank"
 ITBANK_PREFIX = "/itbank"
 ITBANK_BRANCH_OFFICES = "/branch-offices"
 
