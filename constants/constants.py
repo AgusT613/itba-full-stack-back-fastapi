@@ -30,6 +30,8 @@ ITBANK_ROUTER_TAG = "itbank"
 ITBANK_PREFIX = "/itbank"
 ITBANK_BRANCH_OFFICES = "/branch-offices"
 
+HOME_BANKING_PREFIX = "/homebanking"
+
 # EXCEPTION MESSAGES
 INVALIDE_CREDENTIALS = "Could not validate credentials"
 INACTIVE_USER = "Inactive user"

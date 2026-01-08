@@ -1,12 +1,8 @@
 from fastapi import APIRouter
-from constants.constants import ITBANK_BRANCH_OFFICES, ITBANK_PREFIX
-from db.connection import SessionDep
-from sqlmodel import select
-from models.branch_office import BranchOffice
+from .public.public import router as public_router
+from .homebanking.homebanking import router as homebanking_router
 
-router = APIRouter(prefix=ITBANK_PREFIX)
+router = APIRouter()
 
-
-@router.get(ITBANK_BRANCH_OFFICES)
-async def read_item(session: SessionDep):
-    return session.exec(select(BranchOffice)).all()
+router.include_router(public_router)
+router.include_router(homebanking_router)
