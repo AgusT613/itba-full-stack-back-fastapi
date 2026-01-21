@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
 from sqlmodel import select
-from models.user import User
+from models.users import User
 from db.connection import SessionDep
 from datetime import datetime, timedelta, timezone
 import jwt

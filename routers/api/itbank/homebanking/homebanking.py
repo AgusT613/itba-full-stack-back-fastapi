@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from constants.constants import HOME_BANKING_PREFIX
 from routers.api.auth.utils import get_current_user
-from models.user import User
+from models.users import User
 from db.connection import SessionDep
 from models.accounts import BankAccount
 from sqlmodel import select

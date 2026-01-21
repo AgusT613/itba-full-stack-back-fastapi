@@ -5,8 +5,9 @@ SQLITE_FILE_NAME = "database.db"
 SQLITE_URL = f"sqlite:///{SQLITE_FILE_NAME}"
 
 # TABLE NAMES
-BRANCH_OFFICE = "branch_office"
-USER = "user"
+BRANCH_OFFICES = "branch_offices"
+USERS = "users"
+BANK_ACCOUNTS = "bank_accounts"
 
 # .ENV
 ALGORITHM = "HS256"

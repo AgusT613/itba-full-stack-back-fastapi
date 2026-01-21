@@ -1,9 +1,9 @@
 from sqlmodel import Field, SQLModel
-from constants.constants import BRANCH_OFFICE
+from constants.constants import BRANCH_OFFICES
 
 
 class BranchOffice(SQLModel, table=True):
-    __tablename__ = BRANCH_OFFICE
+    __tablename__ = BRANCH_OFFICES
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=255)
     address: str = Field(max_length=255)

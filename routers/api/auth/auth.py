@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import Annotated
 from fastapi import Depends
-from models.user import User
+from models.users import User
 from fastapi.security import OAuth2PasswordRequestForm
 from db.connection import SessionDep
 from datetime import timedelta
