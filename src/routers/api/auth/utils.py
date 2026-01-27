@@ -3,19 +3,19 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
 from sqlmodel import select
-from models.users import User
-from db.connection import SessionDep
+from src.models.users import User
+from src.db.connection import SessionDep
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt.exceptions import InvalidTokenError
-from constants.constants import (
+from src.constants.constants import (
     INACTIVE_USER,
     INVALIDE_CREDENTIALS,
     SECRET_KEY,
     ALGORITHM,
     TOKEN_URL,
 )
-from routers.api.auth.schemas import TokenData
+from src.routers.api.auth.schemas import TokenData
 
 
 password_hash = PasswordHash.recommended()

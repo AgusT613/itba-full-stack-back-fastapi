@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import Annotated
 from fastapi import Depends
-from models.users import User
+from src.models.users import User
 from fastapi.security import OAuth2PasswordRequestForm
-from db.connection import SessionDep
+from src.db.connection import SessionDep
 from datetime import timedelta
-from constants.constants import (
+from src.constants.constants import (
     ALREADY_REGISTERED_USER,
     AUTH_GET_CURRENT_ACTIVE_USER,
     AUTH_GET_CURRENT_USER,
@@ -15,7 +15,7 @@ from constants.constants import (
     INCORRECT_USERNAME_OR_PASSWORD,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
-from routers.api.auth.utils import (
+from src.routers.api.auth.utils import (
     authenticate_user,
     create_access_token,
     get_current_active_user,
@@ -23,7 +23,7 @@ from routers.api.auth.utils import (
     get_password_hash,
     get_user,
 )
-from routers.api.auth.schemas import Token, UserModel
+from src.routers.api.auth.schemas import Token, UserModel
 
 
 router = APIRouter(prefix=AUTH_PREFIX)

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from db.connection import create_db_and_tables
+from src.db.connection import create_db_and_tables
 from contextlib import asynccontextmanager
-from routers.routers import api_router
+from src.routers.routers import api_router
 from dotenv import load_dotenv
 
 load_dotenv()

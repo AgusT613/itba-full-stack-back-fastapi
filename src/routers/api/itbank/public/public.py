@@ -1,8 +1,8 @@
 from fastapi import APIRouter
-from constants.constants import ITBANK_BRANCH_OFFICES, ITBANK_PREFIX
-from db.connection import SessionDep
+from src.constants.constants import ITBANK_BRANCH_OFFICES, ITBANK_PREFIX
+from src.db.connection import SessionDep
 from sqlmodel import select
-from models.branch_offices import BranchOffice
+from src.models.branch_offices import BranchOffice
 
 router = APIRouter(prefix=ITBANK_PREFIX)
 

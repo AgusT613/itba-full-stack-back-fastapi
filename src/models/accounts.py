@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field
-from constants.constants import BANK_ACCOUNTS
+from src.constants.constants import BANK_ACCOUNTS
 
 
 class BankAccount(SQLModel, table=True):

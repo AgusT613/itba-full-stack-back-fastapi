@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from constants.constants import API_PREFIX, AUTH_ROUTER_TAG, ITBANK_ROUTER_TAG
-from routers.api.itbank import itbank
-from routers.api.auth import auth
+from src.constants.constants import API_PREFIX, AUTH_ROUTER_TAG, ITBANK_ROUTER_TAG
+from src.routers.api.itbank import itbank
+from src.routers.api.auth import auth
 
 api_router = APIRouter(prefix=API_PREFIX)
 

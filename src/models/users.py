@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field
-from constants.constants import USERS
+from src.constants.constants import USERS
 
 
 class User(SQLModel, table=True):

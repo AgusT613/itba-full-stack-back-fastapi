@@ -1,7 +1,7 @@
 import os
 
 # SQLITE
-SQLITE_FILE_NAME = "database.db"
+SQLITE_FILE_NAME = "src/database.db"
 SQLITE_URL = f"sqlite:///{SQLITE_FILE_NAME}"
 
 # TABLE NAMES
@@ -32,6 +32,11 @@ ITBANK_PREFIX = "/itbank"
 ITBANK_BRANCH_OFFICES = "/branch-offices"
 
 HOME_BANKING_PREFIX = "/homebanking"
+
+# COMPLETE ENDPOINT
+ITBANK_BRANCH_OFFICES_COMPLETE_ENDPOINT = (
+    API_PREFIX + ITBANK_PREFIX + ITBANK_BRANCH_OFFICES
+)
 
 # EXCEPTION MESSAGES
 INVALIDE_CREDENTIALS = "Could not validate credentials"

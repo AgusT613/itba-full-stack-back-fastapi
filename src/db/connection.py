@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Depends
 from sqlmodel import create_engine, SQLModel, Session
-from constants.constants import SQLITE_FILE_NAME, SQLITE_URL
+from src.constants.constants import SQLITE_URL
 
 connect_args = {"check_same_thread": False}
 engine = create_engine(SQLITE_URL, connect_args=connect_args)

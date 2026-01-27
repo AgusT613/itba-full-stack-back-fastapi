@@ -1,5 +1,5 @@
 from sqlmodel import Field, SQLModel
-from constants.constants import BRANCH_OFFICES
+from src.constants.constants import BRANCH_OFFICES
 
 
 class BranchOffice(SQLModel, table=True):
