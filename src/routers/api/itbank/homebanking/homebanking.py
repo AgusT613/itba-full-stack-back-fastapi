@@ -12,8 +12,10 @@ router = APIRouter(prefix=HOME_BANKING_PREFIX, dependencies=[Depends(get_current
 
 
 @router.get("/")
-async def get_homebanking():
-    return {"message": "Welcome to Home Banking!"}
+async def get_homebanking(
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    return {"message": f"Welcome to ITBANK Homebanking {current_user.username.capitalize()}!"}
 
 
 @router.get("/accounts")
