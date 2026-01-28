@@ -62,7 +62,7 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.post(AUTH_POST_REGISTER)
+@router.post(AUTH_POST_REGISTER, status_code=status.HTTP_201_CREATED)
 async def register(
     user: UserModel,
     session: SessionDep,
