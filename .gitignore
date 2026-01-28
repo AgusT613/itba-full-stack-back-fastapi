@@ -1,3 +1,6 @@
 __pycache__/
 database.db
-.env
+.env*
+.vscode/
+.pytest_cache/
+.DS_Store

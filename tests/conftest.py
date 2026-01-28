@@ -1,9 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
-from src.main import app
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 from src.db.connection import get_session
+from faker import Faker
+from src.main import app
 
 @pytest.fixture(name="session")
 def session_fixture():
@@ -26,3 +27,7 @@ def client_fixture(session: Session):
     client = TestClient(app)
     yield client
     app.dependency_overrides.clear()
+
+@pytest.fixture(name="fake")
+def fake_fixture():
+    return Faker()
