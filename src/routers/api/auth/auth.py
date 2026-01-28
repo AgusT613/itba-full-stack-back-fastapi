@@ -7,8 +7,6 @@ from src.db.connection import SessionDep
 from datetime import timedelta
 from src.constants.constants import (
     ALREADY_REGISTERED_USER,
-    AUTH_GET_CURRENT_ACTIVE_USER,
-    AUTH_GET_CURRENT_USER,
     AUTH_POST_REGISTER,
     AUTH_POST_TOKEN,
     AUTH_PREFIX,
@@ -18,8 +16,6 @@ from src.constants.constants import (
 from src.routers.api.auth.utils import (
     authenticate_user,
     create_access_token,
-    get_current_active_user,
-    get_current_user,
     get_password_hash,
     get_user,
 )
@@ -27,18 +23,6 @@ from src.routers.api.auth.schemas import Token, UserModel
 
 
 router = APIRouter(prefix=AUTH_PREFIX)
-
-
-@router.get(AUTH_GET_CURRENT_USER)
-async def read_current_user(current_user: Annotated[User, Depends(get_current_user)]):
-    return current_user
-
-
-@router.get(AUTH_GET_CURRENT_ACTIVE_USER)
-async def read_current_active_user(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-):
-    return [{"owner": current_user.username, "info": current_user}]
 
 
 @router.post(AUTH_POST_TOKEN)
