@@ -5,9 +5,7 @@ from sqlmodel.pool import StaticPool
 from src.db.connection import get_session
 from faker import Faker
 from src.main import app
-from src.models.users import User
 from .utils import _create_user
-from typing import Callable, Tuple
 
 
 @pytest.fixture(name="session")

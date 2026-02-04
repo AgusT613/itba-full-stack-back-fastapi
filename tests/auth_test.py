@@ -1,6 +1,10 @@
-from src.constants.constants import AUTH_REGISTER_COMPLETE_ENDPOINT, AUTH_GET_TOKEN_COMPLETE_ENDPOINT
+from src.constants.constants import (
+    AUTH_REGISTER_COMPLETE_ENDPOINT,
+    AUTH_GET_TOKEN_COMPLETE_ENDPOINT,
+)
 from src.models.users import User
 from src.routers.api.auth.utils import get_password_hash
+
 
 def test_auth_register_user(client, fake):
     new_user = {
@@ -13,6 +17,7 @@ def test_auth_register_user(client, fake):
     assert response.status_code == 201
     data = response.json()
     assert data["username"] == new_user["username"]
+
 
 def test_auth_get_token(client, session, fake):
     login_data = {
