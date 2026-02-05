@@ -4,7 +4,15 @@ from src.routers.api.auth.utils import get_password_hash
 from faker import Faker
 
 
-def _create_user(session: Session, username: str, password: str, fake: Faker) -> User:
+def _create_user(
+    session: Session,
+    fake: Faker,
+    username: str = None,
+    password: str = None,
+) -> User:
+    username = username or fake.user_name()
+    password = password or fake.password()
+
     user = User(
         username=username,
         hashed_password=get_password_hash(password),

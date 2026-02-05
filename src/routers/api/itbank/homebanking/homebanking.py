@@ -54,11 +54,6 @@ async def get_account_details(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
-    if account.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=403, detail="You do not have permission to view this account"
-        )
-
     return account
 
 
