@@ -90,11 +90,20 @@ async def make_transfer(
         )
     ).first()
 
+    if not sender_account:
+        raise HTTPException(status_code=404, detail="Sender account not found")
+
     if not receiver_account:
         raise HTTPException(status_code=404, detail="Receiver account not found")
 
     if sender_account.balance < transfer.balance:
         raise HTTPException(status_code=400, detail="Insufficient funds")
+
+    if transfer.balance <= 0:
+        raise HTTPException(status_code=400, detail="Transfer amount must be positive")
+
+    if transfer.receiver_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot transfer to self")
 
     sender_account.balance -= transfer.balance
     receiver_account.balance += transfer.balance
