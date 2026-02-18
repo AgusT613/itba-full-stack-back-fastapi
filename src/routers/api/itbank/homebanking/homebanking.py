@@ -9,6 +9,7 @@ from src.routers.api.auth.utils import get_current_user
 from src.models.users import User
 from src.db.connection import SessionDep
 from src.models.accounts import BankAccount
+from src.models.cards import Card
 from src.models.transfers import Transfer, TransferCreate
 from sqlmodel import select
 
@@ -127,3 +128,17 @@ async def make_transfer(
         "receiver": receiver_account,
         "balance": transfer.balance,
     }
+
+
+# CARDS
+@router.get("/cards")
+async def get_card_list(
+    session: SessionDep, current_user: Annotated[User, Depends(get_current_user)]
+):
+    cards = session.exec(
+        select(Card).where(
+            Card.account_id == BankAccount.id, User.id == current_user.id
+        )
+    ).all()
+
+    return cards
