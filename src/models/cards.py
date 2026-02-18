@@ -5,7 +5,7 @@ from datetime import datetime
 class Card(SQLModel, table=True):
     __tablename__ = "cards"
 
-    id: int = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     account_id: int = Field(foreign_key="bank_accounts.id")
     user_id: int = Field(foreign_key="users.id")
     card_type: str

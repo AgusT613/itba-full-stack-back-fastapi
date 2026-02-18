@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class Transfer(SQLModel, table=True):
     __tablename__ = "transfers"
 
-    id: int = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     sender_id: int = Field(foreign_key="users.id")
     receiver_id: int = Field(foreign_key="users.id")
     balance: float = Field(default=0.0)

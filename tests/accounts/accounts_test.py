@@ -55,6 +55,8 @@ def test_get_my_accounts_with_accounts(client_auth, session, fake):
     session.add(account1)
     session.add(account2)
     session.commit()
+    session.refresh(account1)
+    session.refresh(account2)
 
     response = auth_client.get(ITBANK_ACCOUNTS_COMPLETE_ENDPOINT)
 
