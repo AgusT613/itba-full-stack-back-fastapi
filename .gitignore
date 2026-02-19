@@ -4,3 +4,4 @@ database.db
 .vscode/
 .pytest_cache/
 .DS_Store
+.coverage
