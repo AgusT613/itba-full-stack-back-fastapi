@@ -1,0 +1,82 @@
+from sqlmodel import select
+from src.models.transfers import Transfer, TransferCreate
+from fastapi import APIRouter, Depends, HTTPException
+from src.constants.constants import TRANSFERS_PREFIX
+from src.routers.api.auth.utils import get_current_user
+from src.db.connection import SessionDep
+from typing import Annotated
+from src.models.users import User
+from src.models.accounts import BankAccount
+
+router = APIRouter(prefix=TRANSFERS_PREFIX, dependencies=[Depends(get_current_user)])
+
+
+@router.get("/")
+async def get_transfer_history(
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    transfers = session.exec(
+        select(Transfer).where(
+            Transfer.sender_id == current_user.id,
+            Transfer.receiver_id == current_user.id,
+        )
+    ).all()
+
+    return transfers
+
+
+@router.post("/")
+async def make_transfer(
+    transfer: TransferCreate,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    sender_account = session.exec(
+        select(BankAccount).where(BankAccount.user_id == current_user.id)
+    ).first()
+
+    receiver_account = session.exec(
+        select(BankAccount).where(
+            BankAccount.user_id == transfer.receiver_id
+            and BankAccount.account_number == transfer.account_number
+        )
+    ).first()
+
+    if not sender_account:
+        raise HTTPException(status_code=404, detail="Sender account not found")
+
+    if not receiver_account:
+        raise HTTPException(status_code=404, detail="Receiver account not found")
+
+    if sender_account.balance < transfer.balance:
+        raise HTTPException(status_code=400, detail="Insufficient funds")
+
+    if transfer.balance <= 0:
+        raise HTTPException(status_code=400, detail="Transfer amount must be positive")
+
+    if transfer.receiver_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot transfer to self")
+
+    sender_account.balance -= transfer.balance
+    receiver_account.balance += transfer.balance
+
+    transfer = Transfer(
+        sender_id=current_user.id,
+        receiver_id=receiver_account.user_id,
+        balance=transfer.balance,
+    )
+
+    session.add(transfer)
+    session.add(sender_account)
+    session.add(receiver_account)
+    session.commit()
+    session.refresh(transfer)
+    session.refresh(sender_account)
+    session.refresh(receiver_account)
+
+    return {
+        "sender": sender_account,
+        "receiver": receiver_account,
+        "balance": transfer.balance,
+    }
