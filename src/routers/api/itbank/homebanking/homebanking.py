@@ -8,7 +8,7 @@ from src.constants.constants import (
 from src.routers.api.auth.utils import get_current_user
 from src.models.users import User
 from src.db.connection import SessionDep
-from src.models.accounts import BankAccount
+from src.models.accounts import BankAccount, BankAccountCreate
 from src.models.cards import Card
 from src.models.transfers import Transfer, TransferCreate
 from src.models.loans import Loan, LoanCreate
@@ -57,6 +57,27 @@ async def get_account_details(
         raise HTTPException(status_code=404, detail="Account not found")
 
     return account
+
+
+@router.post(ACCOUNTS_PREFIX)
+async def create_account_for_user(
+    bank_account: BankAccountCreate,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    new_account = BankAccount(
+        account_number=bank_account.account_number,
+        account_type=bank_account.account_type,
+        balance=bank_account.balance,
+        description=bank_account.description,
+        user_id=current_user.id,
+    )
+
+    session.add(new_account)
+    session.commit()
+    session.refresh(new_account)
+
+    return new_account
 
 
 # TRANSFERS

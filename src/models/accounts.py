@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field
 from src.constants.constants import BANK_ACCOUNTS
+from pydantic import BaseModel
 
 
 class BankAccount(SQLModel, table=True):
@@ -12,3 +13,10 @@ class BankAccount(SQLModel, table=True):
     account_number: str = Field(max_length=20)
 
     user_id: int = Field(foreign_key="users.id")
+
+
+class BankAccountCreate(BaseModel):
+    account_type: str
+    description: str
+    balance: float
+    account_number: str
