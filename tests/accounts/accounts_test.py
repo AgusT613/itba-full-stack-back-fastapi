@@ -1,6 +1,7 @@
 from src.constants.constants import ITBANK_ACCOUNTS_COMPLETE_ENDPOINT
-from src.models.accounts import BankAccount
+from src.models.accounts import BankAccount, BankAccountCreate
 from tests.utils import _create_user
+from fastapi import status
 
 
 def test_get_my_accounts_no_accounts(client_auth):
@@ -134,3 +135,27 @@ def test_get_account_details_with_invalid_format(client_auth):
     response = auth_client.get(f"{ITBANK_ACCOUNTS_COMPLETE_ENDPOINT}/invalid-format")
 
     assert response.status_code in [404, 422]
+
+
+def test_create_account_for_user(client_auth, fake):
+    """Test creating an account for the current user"""
+    client, user = client_auth()
+
+    new_account = BankAccountCreate(
+        account_number=fake.bban(),
+        account_type="type",
+        balance=fake.random_int(min=0, max=10000),
+        description=fake.text(max_nb_chars=20),
+    )
+
+    response = client.post(
+        f"{ITBANK_ACCOUNTS_COMPLETE_ENDPOINT}", json=new_account.model_dump()
+    )
+    data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert data["user_id"] == user.id
+    assert data["account_type"] == new_account.account_type
+    assert data["account_number"] == new_account.account_number
+    assert data["balance"] == new_account.balance
+    assert data["description"] == new_account.description
