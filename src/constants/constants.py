@@ -50,3 +50,6 @@ INVALIDE_CREDENTIALS = "Could not validate credentials"
 INACTIVE_USER = "Inactive user"
 INCORRECT_USERNAME_OR_PASSWORD = "Incorrect username or password"
 ALREADY_REGISTERED_USER = "Username already registered"
+
+# CORS ORIGINS
+HOMEBANKING_FRONTEND_URL = os.getenv("ITBANK_HOMEBANKING_FRONTEND_URL")
