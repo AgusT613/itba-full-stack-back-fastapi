@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from typing import Annotated
 from fastapi import Depends
 from src.models.users import User
+from src.models.accounts import BankAccount
 from fastapi.security import OAuth2PasswordRequestForm
 from src.db.connection import SessionDep
 from datetime import timedelta
@@ -20,6 +21,7 @@ from src.routers.api.auth.utils import (
     get_user,
 )
 from src.routers.api.auth.schemas import Token, UserModel
+import uuid
 
 
 router = APIRouter(prefix=AUTH_PREFIX)
@@ -66,7 +68,19 @@ async def register(
     )
 
     session.add(new_user)
+    session.flush()
+
+    new_account = BankAccount(
+        description="ITBANK account",
+        account_number=str(uuid.uuid4().hex[:16].upper()),
+        account_type="personal",
+        balance=0.0,
+        user_id=new_user.id,
+    )
+
+    session.add(new_account),
     session.commit()
     session.refresh(new_user)
+    session.refresh(new_account)
 
-    return new_user
+    return {"user": new_user, "bank_account": new_account}
