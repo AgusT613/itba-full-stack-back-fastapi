@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field
 from src.constants.constants import USERS
+from pydantic import BaseModel
 
 
 class User(SQLModel, table=True):
@@ -10,3 +11,9 @@ class User(SQLModel, table=True):
     full_name: str = Field(max_length=255)
     disabled: bool
     hashed_password: str
+
+
+class UserHomebankingInfo(BaseModel):
+    username: str
+    email: str
+    full_name: str

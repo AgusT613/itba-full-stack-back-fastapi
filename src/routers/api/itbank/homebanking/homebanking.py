@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from src.constants.constants import HOME_BANKING_PREFIX
 from src.routers.api.auth.utils import get_current_user
-from src.models.users import User
+from src.models.users import User, UserHomebankingInfo
 from .accounts.accounts import router as accounts_router
 from .transfers.transfers import router as transfers_router
 from .cards.cards import router as cards_router
@@ -23,3 +23,16 @@ async def get_homebanking(
     return {
         "message": f"Welcome to ITBANK Homebanking {current_user.username.capitalize()}!"
     }
+
+
+@router.get("/me")
+async def get_current_user(
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    user = UserHomebankingInfo(
+        email=current_user.email,
+        full_name=current_user.full_name,
+        username=current_user.username,
+    )
+
+    return user
