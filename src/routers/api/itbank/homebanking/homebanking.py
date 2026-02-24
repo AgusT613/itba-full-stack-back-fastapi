@@ -1,6 +1,11 @@
+from sqlmodel import select
 from typing import Annotated
 from fastapi import APIRouter, Depends
 from src.constants.constants import HOME_BANKING_PREFIX
+from src.db.connection import SessionDep
+from src.models.accounts import BankAccount
+from src.models.cards import Card, CardResponseModel
+from src.models.transfers import Transfer, TransferResponseModel
 from src.routers.api.auth.utils import get_current_user
 from src.models.users import User, UserHomebankingInfo
 from .accounts.accounts import router as accounts_router
@@ -19,9 +24,51 @@ router.include_router(loans_router)
 @router.get("/")
 async def get_homebanking(
     current_user: Annotated[User, Depends(get_current_user)],
+    session: SessionDep,
 ):
+    bank_account = session.exec(
+        select(BankAccount).where(BankAccount.user_id == current_user.id)
+    ).first()
+
+    cards = session.exec(select(Card).where(Card.user_id == current_user.id)).all()
+    cards_response = [
+        CardResponseModel(
+            account_id=card.account_id,
+            card_type=card.card_type,
+            last_four=card.last_four,
+            card_holder_name=card.card_holder_name,
+            expiration_date=card.expiration_date,
+            brand=card.brand,
+            status=card.status,
+            id=card.id,
+        )
+        for card in cards
+    ]
+
+    transfers = session.exec(
+        select(Transfer, User)
+        .join(User, onclause=Transfer.receiver_id == User.id)
+        .where(Transfer.sender_id == current_user.id)
+    ).all()
+    transfers_response = [
+        TransferResponseModel(
+            id=transfer.id,
+            receiver_username=user.username,
+            balance=transfer.balance,
+            transfer_date=transfer.transfer_date,
+        )
+        for transfer, user in transfers
+    ]
+
     return {
-        "message": f"Welcome to ITBANK Homebanking {current_user.username.capitalize()}!"
+        "user": UserHomebankingInfo(
+            email=current_user.email,
+            full_name=current_user.full_name,
+            username=current_user.username,
+        ),
+        "itbank_account": bank_account,
+        "cards": cards_response,
+        "transfers": transfers_response,
     }
 
 

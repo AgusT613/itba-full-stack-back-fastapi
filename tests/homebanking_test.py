@@ -8,7 +8,8 @@ def test_get_homebanking_welcome_message(client_auth):
 
     assert response.status_code == 200
     data = response.json()
-    assert (
-        data["message"]
-        == f"Welcome to ITBANK Homebanking {user.username.capitalize()}!"
-    )
+    assert "user" in data
+    assert "itbank_account" in data
+    assert "cards" in data
+    assert "transfers" in data
+    assert data["user"]["username"] == user.username

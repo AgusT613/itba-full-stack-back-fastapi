@@ -20,3 +20,10 @@ class TransferCreate(BaseModel):
     receiver_id: int
     account_number: str
     balance: float
+
+
+class TransferResponseModel(BaseModel):
+    id: int
+    receiver_username: str
+    balance: float
+    transfer_date: datetime

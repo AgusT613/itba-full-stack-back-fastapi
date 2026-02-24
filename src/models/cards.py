@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field, func
 from datetime import datetime
+from pydantic import BaseModel
 
 
 class Card(SQLModel, table=True):
@@ -21,3 +22,14 @@ class Card(SQLModel, table=True):
     updated_at: datetime = Field(
         sa_column_kwargs={"server_default": func.now()}, nullable=False
     )
+
+
+class CardResponseModel(BaseModel):
+    id: int
+    account_id: int
+    card_type: str
+    last_four: str
+    card_holder_name: str
+    expiration_date: datetime
+    brand: str
+    status: str
