@@ -5,7 +5,7 @@ from src.db.connection import SessionDep
 from typing import Annotated
 from src.models.users import User
 from src.models.accounts import BankAccount
-from src.models.loans import Loan, LoanCreate
+from src.models.loans import Loan, LoanCreate, LoanFullUpdate, LoanPartialUpdate
 
 router = APIRouter(prefix="/loans", dependencies=[Depends(get_current_user)])
 
@@ -38,7 +38,7 @@ async def get_loan_by_id(
     return loan
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def request_loan(
     loan: LoanCreate,
     session: SessionDep,
@@ -80,3 +80,79 @@ async def request_loan(
     session.refresh(user_account)
 
     return {"account": user_account, "loan": new_loan}
+
+
+@router.patch("/{loan_id}")
+async def partial_update_loan(
+    loan_id: int,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+    updated_loan_data: LoanPartialUpdate,
+):
+    loan = session.exec(
+        select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)
+    ).first()
+
+    if not loan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No loan found with id {loan_id}",
+        )
+
+    for key, value in updated_loan_data.model_dump(exclude_unset=True).items():
+        setattr(loan, key, value)
+
+    session.add(loan)
+    session.commit()
+    session.refresh(loan)
+
+    return loan
+
+
+@router.put("/{loan_id}")
+async def full_update_loan(
+    loan_id: int,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+    updated_loan_data: LoanFullUpdate,
+):
+    loan = session.exec(
+        select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)
+    ).first()
+
+    if not loan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No loan found with id {loan_id}",
+        )
+
+    for key, value in updated_loan_data.model_dump().items():
+        setattr(loan, key, value)
+
+    session.add(loan)
+    session.commit()
+    session.refresh(loan)
+
+    return loan
+
+
+@router.delete("/{loan_id}")
+async def delete_loan(
+    loan_id: int,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    loan = session.exec(
+        select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)
+    ).first()
+
+    if not loan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No loan found with id {loan_id}",
+        )
+
+    session.delete(loan)
+    session.commit()
+
+    return {"detail": f"Loan with id {loan_id} has been deleted", "deleted_loan": loan}

@@ -32,3 +32,19 @@ class LoanCreate(BaseModel):
     interest_rate: float
     total_installments: int
     remaining_installments: int
+
+
+class LoanPartialUpdate(BaseModel):
+    branch_office_id: int | None = None
+    user_account_id: int | None = None
+    loan_type: str | None = None
+    status: str | None = None
+    remaining_installments: int | None = None
+
+
+class LoanFullUpdate(BaseModel):
+    branch_office_id: int
+    user_account_id: int
+    loan_type: str
+    status: str
+    remaining_installments: int
