@@ -20,3 +20,17 @@ class BankAccountCreate(BaseModel):
     description: str
     balance: float
     account_number: str
+
+
+class BankAccountPartialUpdate(BaseModel):
+    account_number: str
+    account_type: str | None = None
+    description: str | None = None
+    balance: float | None = None
+
+
+class BankAccountFullUpdate(BaseModel):
+    account_number: str
+    account_type: str
+    description: str
+    balance: float
