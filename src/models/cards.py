@@ -33,3 +33,28 @@ class CardResponseModel(BaseModel):
     expiration_date: datetime
     brand: str
     status: str
+
+
+class CardCreate(BaseModel):
+    account_id: int
+    card_type: str
+    last_four: str
+    card_holder_name: str
+    expiration_date: datetime
+    brand: str
+    status: str
+    pin: str
+
+
+class CardPartialUpdate(BaseModel):
+    card_type: str | None = None
+    card_holder_name: str | None = None
+    expiration_date: datetime | None = None
+    status: str | None = None
+
+
+class CardFullUpdate(BaseModel):
+    card_type: str
+    card_holder_name: str
+    expiration_date: datetime
+    status: str
