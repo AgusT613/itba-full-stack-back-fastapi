@@ -63,6 +63,14 @@ def test_transfer_history_with_transfers(client_auth, session, fake):
     assert data["sender"]["balance"] == 700.0
     assert data["receiver"]["balance"] == 800.0
 
+    response = auth_client.get(ITBANK_TRANSFERS_COMPLETE_ENDPOINT)
+    response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["balance"] == 300.0
+    assert data[0]["sender_id"] == sender.id
+    assert data[0]["receiver_id"] == receiver.id
+
 
 def test_transfer_insufficient_funds(client_auth, session, fake):
     """Test transfer fails when sender has insufficient funds"""
@@ -373,3 +381,101 @@ def test_transfer_multiple_times(client_auth, session, fake):
     data = response2.json()
     assert data["sender"]["balance"] == 700.00
     assert data["receiver"]["balance"] == 300.00
+
+
+def test_delete_transfer(client_auth, session, fake):
+    """Test deleting a transfer"""
+    auth_client, sender = client_auth()
+    receiver = _create_user(session, fake)
+
+    sender_account = BankAccount(
+        account_number=fake.unique.random_number(digits=16, fix_len=True),
+        balance=1000.00,
+        user_id=sender.id,
+        account_type=fake.random_element(elements=("checking", "savings")),
+        description=fake.sentence(),
+    )
+
+    receiver_account = BankAccount(
+        account_number=fake.unique.random_number(digits=16, fix_len=True),
+        balance=500.00,
+        user_id=receiver.id,
+        account_type=fake.random_element(elements=("checking", "savings")),
+        description=fake.sentence(),
+    )
+
+    session.add(sender_account)
+    session.add(receiver_account)
+    session.commit()
+    session.refresh(sender_account)
+    session.refresh(receiver_account)
+
+    transfer_data = TransferCreate(
+        account_number=receiver_account.account_number,
+        balance=100.0,
+        receiver_id=receiver.id,
+        sender_id=sender.id,
+    )
+
+    response = auth_client.post(
+        ITBANK_TRANSFERS_COMPLETE_ENDPOINT,
+        json=transfer_data.model_dump(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    transfer_id = data["id"]
+
+    response = auth_client.delete(f"{ITBANK_TRANSFERS_COMPLETE_ENDPOINT}/{transfer_id}")
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["detail"] == "Transfer deleted successfully"
+    assert data["deleted_transfer"]["id"] == transfer_id
+    assert data["deleted_transfer"]["balance"] == 100.0
+    assert data["deleted_transfer"]["sender_id"] == sender.id
+    assert data["deleted_transfer"]["receiver_id"] == receiver.id
+
+
+def test_delete_transfer_receiver_account_not_found(client_auth, session, fake):
+    """Test deleting a transfer when receiver account is not found"""
+    auth_client, sender = client_auth()
+
+    sender_account = BankAccount(
+        account_number=fake.unique.random_number(digits=16, fix_len=True),
+        balance=1000.00,
+        user_id=sender.id,
+        account_type=fake.random_element(elements=("checking", "savings")),
+        description=fake.sentence(),
+    )
+
+    session.add(sender_account)
+    session.commit()
+    session.refresh(sender_account)
+
+    transfer_data = TransferCreate(
+        account_number="9999999999999999",
+        balance=100.0,
+        receiver_id=9999,
+        sender_id=sender.id,
+    )
+
+    response = auth_client.post(
+        ITBANK_TRANSFERS_COMPLETE_ENDPOINT,
+        json=transfer_data.model_dump(),
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    data = response.json()
+    assert "Receiver account not found" in data["detail"]
+
+
+def test_delete_transfer_not_found(client_auth, session, fake):
+    """Test deleting a transfer that doesn't exist"""
+    auth_client, sender = client_auth()
+
+    response = auth_client.delete(f"{ITBANK_TRANSFERS_COMPLETE_ENDPOINT}/9999")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    data = response.json()
+    assert "Transfer not found" in data["detail"]
