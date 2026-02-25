@@ -6,7 +6,7 @@ from src.models.branch_offices import BranchOffice
 from faker import Faker
 
 router = APIRouter(prefix=ITBANK_PREFIX)
-fake = Faker()
+fake = Faker(locale="es_AR")
 
 
 @router.get(ITBANK_BRANCH_OFFICES)
