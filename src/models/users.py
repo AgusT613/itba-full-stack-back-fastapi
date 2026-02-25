@@ -17,3 +17,7 @@ class UserHomebankingInfo(BaseModel):
     username: str
     email: str
     full_name: str
+
+
+class UserResponseModel(UserHomebankingInfo):
+    id: int

@@ -7,7 +7,7 @@ from src.models.accounts import BankAccount
 from src.models.cards import Card, CardResponseModel
 from src.models.transfers import Transfer, TransferResponseModel
 from src.routers.api.auth.utils import get_current_user
-from src.models.users import User, UserHomebankingInfo
+from src.models.users import User, UserHomebankingInfo, UserResponseModel
 from .accounts.accounts import router as accounts_router
 from .transfers.transfers import router as transfers_router
 from .cards.cards import router as cards_router
@@ -83,3 +83,22 @@ async def get_current_user(
     )
 
     return user
+
+
+@router.get("/users")
+async def get_all_users(
+    session: SessionDep,
+):
+    users = session.exec(select(User)).all()
+
+    users_response = [
+        UserResponseModel(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            username=user.username,
+        )
+        for user in users
+    ]
+
+    return users_response
