@@ -18,8 +18,8 @@ async def get_transfer_history(
 ):
     transfers = session.exec(
         select(Transfer).where(
-            Transfer.sender_id == current_user.id,
-            Transfer.receiver_id == current_user.id,
+            (Transfer.sender_id == current_user.id)
+            | (Transfer.receiver_id == current_user.id)
         )
     ).all()
 
@@ -76,7 +76,30 @@ async def make_transfer(
     session.refresh(receiver_account)
 
     return {
+        "id": transfer.id,
         "sender": sender_account,
         "receiver": receiver_account,
         "balance": transfer.balance,
     }
+
+
+@router.delete("/{transfer_id}")
+async def delete_transfer(
+    transfer_id: int,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    transfer = session.exec(
+        select(Transfer).where(
+            Transfer.id == transfer_id,
+            Transfer.sender_id == current_user.id,
+        )
+    ).first()
+
+    if not transfer:
+        raise HTTPException(status_code=404, detail="Transfer not found")
+
+    session.delete(transfer)
+    session.commit()
+
+    return {"detail": "Transfer deleted successfully", "deleted_transfer": transfer}
