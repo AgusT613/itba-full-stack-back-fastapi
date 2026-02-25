@@ -26,3 +26,18 @@ def test_get_homebanking_current_user_info(client_auth):
     assert "full_name" in data
     assert "username" in data
     assert data["username"] == user.username
+
+
+def test_get_all_users(client_auth):
+    auth_client, _ = client_auth()
+
+    response = auth_client.get(f"{ITBANK_HOMEBANKING_COMPLETE_ENDPOINT}/users")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    for user in data:
+        assert "id" in user
+        assert "email" in user
+        assert "full_name" in user
+        assert "username" in user
