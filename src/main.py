@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-origins = [HOMEBANKING_FRONTEND_URL]
+origins = [HOMEBANKING_FRONTEND_URL, "http://localhost:3000"]
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(api_router)
@@ -27,6 +27,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.head("/server-alive")
+async def server_alive():
+    return {"message": "Server is alive!"}
 
 
 if __name__ == "__main__":
