@@ -15,11 +15,7 @@ router = APIRouter(prefix="/cards", dependencies=[Depends(get_current_user)])
 async def get_card_list(
     session: SessionDep, current_user: Annotated[User, Depends(get_current_user)]
 ):
-    cards = session.exec(
-        select(Card).where(
-            Card.account_id == BankAccount.id, User.id == current_user.id
-        )
-    ).all()
+    cards = session.exec(select(Card).where(Card.user_id == current_user.id)).all()
 
     return cards
 
