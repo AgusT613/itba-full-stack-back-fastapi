@@ -31,7 +31,6 @@ class LoanCreate(BaseModel):
     amount: float
     interest_rate: float
     total_installments: int
-    remaining_installments: int
 
 
 class LoanPartialUpdate(BaseModel):

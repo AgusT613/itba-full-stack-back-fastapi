@@ -66,7 +66,7 @@ async def request_loan(
         interest_rate=loan.interest_rate,
         loan_type=loan.loan_type,
         total_installments=loan.total_installments,
-        remaining_installments=loan.remaining_installments,
+        remaining_installments=loan.total_installments,
         user_account_id=loan.user_account_id,
         status="active",
     )
@@ -151,6 +151,20 @@ async def delete_loan(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No loan found with id {loan_id}",
         )
+
+    account = session.exec(
+        select(BankAccount).where(
+            BankAccount.id == loan.user_account_id,
+            BankAccount.user_id == current_user.id,
+        )
+    ).first()
+
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Associated account not found"
+        )
+
+    account.balance -= loan.amount
 
     session.delete(loan)
     session.commit()
