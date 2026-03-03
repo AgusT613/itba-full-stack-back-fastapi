@@ -49,7 +49,8 @@ def test_transfer_history_with_transfers(client_auth, session, fake):
 
     transfer = TransferCreate(
         balance=300.0,
-        alias=receiver_account.alias,
+        receiver_alias=receiver_account.alias,
+        sender_alias=sender_account.alias,
     )
 
     response = auth_client.post(
@@ -102,11 +103,9 @@ def test_transfer_insufficient_funds(client_auth, session, fake):
     session.refresh(receiver_account)
 
     transfer_data = TransferCreate(
-        account_number=receiver_account.account_number,
         balance=200.0,
-        receiver_id=receiver.id,
-        sender_id=sender.id,
-        alias=receiver_account.alias,
+        receiver_alias=receiver_account.alias,
+        sender_alias=sender_account.alias,
     )
 
     response = auth_client.post(
@@ -138,11 +137,9 @@ def test_transfer_receiver_account_not_found(client_auth, session, fake):
     session.refresh(sender_account)
 
     transfer_data = TransferCreate(
-        account_number="9999999999999999",
         balance=100.0,
-        receiver_id=receiver.id,
-        sender_id=sender.id,
-        alias="nonexistent_alias",
+        receiver_alias="nonexistent_alias",
+        sender_alias=sender_account.alias,
     )
 
     response = auth_client.post(
@@ -174,11 +171,9 @@ def test_transfer_no_sender_account(client_auth, session, fake):
     session.refresh(receiver_account)
 
     transfer_data = TransferCreate(
-        account_number=receiver_account.account_number,
         balance=100.0,
-        receiver_id=receiver.id,
-        sender_id=sender.id,
-        alias=receiver_account.alias,
+        receiver_alias=receiver_account.alias,
+        sender_alias="nonexistent_sender_alias",
     )
 
     response = auth_client.post(
@@ -195,7 +190,8 @@ def test_transfer_unauthenticated(client, session, fake):
     """Test transfer fails when user is not authenticated"""
     transfer_data = TransferCreate(
         balance=100.0,
-        alias="some_alias",
+        receiver_alias="some_alias",
+        sender_alias="some_sender_alias",
     )
 
     response = client.post(
@@ -239,7 +235,8 @@ def test_transfer_zero_amount(client_auth, session, fake):
 
     transfer_data = TransferCreate(
         balance=0.0,
-        alias=receiver_account.alias,
+        receiver_alias=receiver_account.alias,
+        sender_alias=sender_account.alias,
     )
 
     response = auth_client.post(
@@ -283,7 +280,8 @@ def test_transfer_negative_amount(client_auth, session, fake):
 
     transfer_data = TransferCreate(
         balance=-100.0,
-        alias=receiver_account.alias,
+        receiver_alias=receiver_account.alias,
+        sender_alias=sender_account.alias,
     )
 
     response = auth_client.post(
@@ -315,7 +313,8 @@ def test_transfer_to_self(client_auth, session, fake):
 
     transfer_data = TransferCreate(
         balance=100.0,
-        alias=sender_account.alias,
+        receiver_alias=sender_account.alias,
+        sender_alias=sender_account.alias,
     )
 
     response = auth_client.post(
@@ -359,7 +358,8 @@ def test_transfer_multiple_times(client_auth, session, fake):
 
     transfer_data_1 = TransferCreate(
         balance=100.0,
-        alias=receiver_account.alias,
+        receiver_alias=receiver_account.alias,
+        sender_alias=sender_account.alias,
     )
 
     response1 = auth_client.post(
@@ -370,7 +370,8 @@ def test_transfer_multiple_times(client_auth, session, fake):
     assert response1.status_code == status.HTTP_200_OK
 
     transfer_data_2 = TransferCreate(
-        alias=receiver_account.alias,
+        receiver_alias=receiver_account.alias,
+        sender_alias=sender_account.alias,
         balance=200.0,
     )
 
@@ -415,7 +416,8 @@ def test_delete_transfer(client_auth, session, fake):
     session.refresh(receiver_account)
 
     transfer_data = TransferCreate(
-        alias=receiver_account.alias,
+        receiver_alias=receiver_account.alias,
+        sender_alias=sender_account.alias,
         balance=100.0,
     )
 
@@ -457,7 +459,8 @@ def test_delete_transfer_receiver_account_not_found(client_auth, session, fake):
     session.refresh(sender_account)
 
     transfer_data = TransferCreate(
-        alias="nonexistent_alias",
+        receiver_alias="nonexistent_alias",
+        sender_alias=sender_account.alias,
         balance=100.0,
     )
 
