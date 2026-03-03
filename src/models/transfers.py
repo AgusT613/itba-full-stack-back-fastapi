@@ -16,9 +16,7 @@ class Transfer(SQLModel, table=True):
 
 
 class TransferCreate(BaseModel):
-    sender_id: int
-    receiver_id: int
-    account_number: str
+    alias: str
     balance: float
 
 

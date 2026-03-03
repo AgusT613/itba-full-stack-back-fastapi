@@ -37,10 +37,7 @@ async def make_transfer(
     ).first()
 
     receiver_account = session.exec(
-        select(BankAccount).where(
-            BankAccount.user_id == transfer.receiver_id
-            and BankAccount.account_number == transfer.account_number
-        )
+        select(BankAccount).where(BankAccount.alias == transfer.alias)
     ).first()
 
     if not sender_account:
@@ -55,7 +52,7 @@ async def make_transfer(
     if transfer.balance <= 0:
         raise HTTPException(status_code=400, detail="Transfer amount must be positive")
 
-    if transfer.receiver_id == current_user.id:
+    if transfer.alias == sender_account.alias:
         raise HTTPException(status_code=400, detail="Cannot transfer to self")
 
     sender_account.balance -= transfer.balance
