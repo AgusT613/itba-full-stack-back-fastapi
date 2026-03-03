@@ -5,3 +5,4 @@ database.db
 .pytest_cache/
 .DS_Store
 .coverage
+TODO.md
