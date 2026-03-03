@@ -29,6 +29,7 @@ def test_transfer_history_with_transfers(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.mime_type(),
         description="Sender account",
+        alias=fake.unique.word(),
     )
 
     receiver_account = BankAccount(
@@ -37,6 +38,7 @@ def test_transfer_history_with_transfers(client_auth, session, fake):
         user_id=receiver.id,
         account_type=fake.mime_type(),
         description="Receiver account",
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -46,10 +48,8 @@ def test_transfer_history_with_transfers(client_auth, session, fake):
     session.refresh(receiver_account)
 
     transfer = TransferCreate(
-        account_number=receiver_account.account_number,
         balance=300.0,
-        sender_id=sender.id,
-        receiver_id=receiver.id,
+        alias=receiver_account.alias,
     )
 
     response = auth_client.post(
@@ -83,6 +83,7 @@ def test_transfer_insufficient_funds(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     receiver_account = BankAccount(
@@ -91,6 +92,7 @@ def test_transfer_insufficient_funds(client_auth, session, fake):
         user_id=receiver.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -104,6 +106,7 @@ def test_transfer_insufficient_funds(client_auth, session, fake):
         balance=200.0,
         receiver_id=receiver.id,
         sender_id=sender.id,
+        alias=receiver_account.alias,
     )
 
     response = auth_client.post(
@@ -127,6 +130,7 @@ def test_transfer_receiver_account_not_found(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -138,6 +142,7 @@ def test_transfer_receiver_account_not_found(client_auth, session, fake):
         balance=100.0,
         receiver_id=receiver.id,
         sender_id=sender.id,
+        alias="nonexistent_alias",
     )
 
     response = auth_client.post(
@@ -161,6 +166,7 @@ def test_transfer_no_sender_account(client_auth, session, fake):
         user_id=receiver.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(receiver_account)
@@ -172,6 +178,7 @@ def test_transfer_no_sender_account(client_auth, session, fake):
         balance=100.0,
         receiver_id=receiver.id,
         sender_id=sender.id,
+        alias=receiver_account.alias,
     )
 
     response = auth_client.post(
@@ -187,10 +194,8 @@ def test_transfer_no_sender_account(client_auth, session, fake):
 def test_transfer_unauthenticated(client, session, fake):
     """Test transfer fails when user is not authenticated"""
     transfer_data = TransferCreate(
-        account_number="123456789",
         balance=100.0,
-        receiver_id=1,
-        sender_id=1,
+        alias="some_alias",
     )
 
     response = client.post(
@@ -214,6 +219,7 @@ def test_transfer_zero_amount(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     receiver_account = BankAccount(
@@ -222,6 +228,7 @@ def test_transfer_zero_amount(client_auth, session, fake):
         user_id=receiver.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -231,10 +238,8 @@ def test_transfer_zero_amount(client_auth, session, fake):
     session.refresh(receiver_account)
 
     transfer_data = TransferCreate(
-        account_number=receiver_account.account_number,
         balance=0.0,
-        receiver_id=receiver.id,
-        sender_id=sender.id,
+        alias=receiver_account.alias,
     )
 
     response = auth_client.post(
@@ -258,6 +263,7 @@ def test_transfer_negative_amount(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     receiver_account = BankAccount(
@@ -266,6 +272,7 @@ def test_transfer_negative_amount(client_auth, session, fake):
         user_id=receiver.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -275,10 +282,8 @@ def test_transfer_negative_amount(client_auth, session, fake):
     session.refresh(receiver_account)
 
     transfer_data = TransferCreate(
-        account_number=receiver_account.account_number,
         balance=-100.0,
-        receiver_id=receiver.id,
-        sender_id=sender.id,
+        alias=receiver_account.alias,
     )
 
     response = auth_client.post(
@@ -301,6 +306,7 @@ def test_transfer_to_self(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -308,10 +314,8 @@ def test_transfer_to_self(client_auth, session, fake):
     session.refresh(sender_account)
 
     transfer_data = TransferCreate(
-        account_number=sender_account.account_number,
         balance=100.0,
-        receiver_id=sender.id,
-        sender_id=sender.id,
+        alias=sender_account.alias,
     )
 
     response = auth_client.post(
@@ -335,6 +339,7 @@ def test_transfer_multiple_times(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     receiver_account = BankAccount(
@@ -343,6 +348,7 @@ def test_transfer_multiple_times(client_auth, session, fake):
         user_id=receiver.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -352,10 +358,8 @@ def test_transfer_multiple_times(client_auth, session, fake):
     session.refresh(receiver_account)
 
     transfer_data_1 = TransferCreate(
-        account_number=receiver_account.account_number,
         balance=100.0,
-        receiver_id=receiver.id,
-        sender_id=sender.id,
+        alias=receiver_account.alias,
     )
 
     response1 = auth_client.post(
@@ -366,10 +370,8 @@ def test_transfer_multiple_times(client_auth, session, fake):
     assert response1.status_code == status.HTTP_200_OK
 
     transfer_data_2 = TransferCreate(
-        account_number=receiver_account.account_number,
+        alias=receiver_account.alias,
         balance=200.0,
-        receiver_id=receiver.id,
-        sender_id=sender.id,
     )
 
     response2 = auth_client.post(
@@ -394,6 +396,7 @@ def test_delete_transfer(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     receiver_account = BankAccount(
@@ -402,6 +405,7 @@ def test_delete_transfer(client_auth, session, fake):
         user_id=receiver.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -411,10 +415,8 @@ def test_delete_transfer(client_auth, session, fake):
     session.refresh(receiver_account)
 
     transfer_data = TransferCreate(
-        account_number=receiver_account.account_number,
+        alias=receiver_account.alias,
         balance=100.0,
-        receiver_id=receiver.id,
-        sender_id=sender.id,
     )
 
     response = auth_client.post(
@@ -447,6 +449,7 @@ def test_delete_transfer_receiver_account_not_found(client_auth, session, fake):
         user_id=sender.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(sender_account)
@@ -454,10 +457,8 @@ def test_delete_transfer_receiver_account_not_found(client_auth, session, fake):
     session.refresh(sender_account)
 
     transfer_data = TransferCreate(
-        account_number="9999999999999999",
+        alias="nonexistent_alias",
         balance=100.0,
-        receiver_id=9999,
-        sender_id=sender.id,
     )
 
     response = auth_client.post(

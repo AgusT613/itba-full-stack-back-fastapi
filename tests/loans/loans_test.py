@@ -21,6 +21,7 @@ def test_get_loans(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -64,6 +65,7 @@ def test_get_loan_by_id(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -107,6 +109,7 @@ def test_request_loan(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -171,6 +174,7 @@ def test_partial_update_loan(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -225,6 +229,7 @@ def test_partial_update_loan_invalid_fields(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -266,6 +271,7 @@ def test_partial_update_loan_no_fields(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -319,6 +325,7 @@ def test_full_update_loan(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -396,6 +403,7 @@ def test_full_update_loan_invalid_fields(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -449,6 +457,7 @@ def test_full_update_loan_no_fields(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -504,6 +513,7 @@ def test_delete_loan(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)
@@ -566,6 +576,7 @@ def test_delete_loan_already_deleted(client_auth, session, fake):
         balance=fake.random_int(min=0, max=100),
         description=fake.text(max_nb_chars=20),
         user_id=user.id,
+        alias=fake.unique.word(),
     )
 
     session.add(user_account)

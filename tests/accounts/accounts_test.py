@@ -46,6 +46,7 @@ def test_get_my_accounts_with_accounts(client_auth, session, fake):
         user_id=user.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
     account2 = BankAccount(
         account_number=fake.unique.random_number(digits=16, fix_len=True),
@@ -53,6 +54,7 @@ def test_get_my_accounts_with_accounts(client_auth, session, fake):
         user_id=user.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
 
     session.add(account1)
@@ -80,6 +82,7 @@ def test_get_account_details_success(client_auth, session, fake):
         user_id=user.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
     session.add(account)
     session.commit()
@@ -105,6 +108,7 @@ def test_get_my_accounts_only_returns_own_accounts(client_auth, session, fake):
         user_id=user1.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
     session.add(user1_account)
 
@@ -115,6 +119,7 @@ def test_get_my_accounts_only_returns_own_accounts(client_auth, session, fake):
         user_id=user2.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
     session.add(user2_account)
 
@@ -173,6 +178,7 @@ def test_partial_update_account(client_auth, session, fake):
         user_id=user.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
     session.add(account)
     session.commit()
@@ -194,6 +200,7 @@ def test_partial_update_account(client_auth, session, fake):
     assert (
         data["description"] == account.description
     )  # description should not be updated
+    assert data["alias"] == account.alias  # alias should not be updated
 
 
 def test_partial_update_account_not_found(client_auth):
@@ -224,6 +231,7 @@ def test_full_update_account(client_auth, session, fake):
         user_id=user.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
     session.add(account)
     session.commit()
@@ -234,6 +242,7 @@ def test_full_update_account(client_auth, session, fake):
         "account_type": "updated_type",
         "balance": 5000.00,
         "description": "Updated description",
+        "alias": "new_alias",
     }
 
     response = auth_client.put(f"{ITBANK_ACCOUNTS_COMPLETE_ENDPOINT}", json=update_data)
@@ -243,6 +252,7 @@ def test_full_update_account(client_auth, session, fake):
     assert data["account_type"] == update_data["account_type"]
     assert data["balance"] == update_data["balance"]
     assert data["description"] == update_data["description"]
+    assert data["alias"] == update_data["alias"]
 
 
 def test_full_update_account_not_found(client_auth):
@@ -254,6 +264,7 @@ def test_full_update_account_not_found(client_auth):
         "account_type": "updated_type",
         "balance": 5000.00,
         "description": "Updated description",
+        "alias": "new_alias",
     }
 
     response = auth_client.put(f"{ITBANK_ACCOUNTS_COMPLETE_ENDPOINT}", json=update_data)
@@ -273,6 +284,7 @@ def test_delete_account_by_number(client_auth, session, fake):
         user_id=user.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
     session.add(account)
     session.commit()
@@ -291,6 +303,7 @@ def test_delete_account_by_number(client_auth, session, fake):
     assert data["account_deleted"]["account_type"] == account.account_type
     assert data["account_deleted"]["balance"] == account.balance
     assert data["account_deleted"]["description"] == account.description
+    assert data["account_deleted"]["alias"] == account.alias
 
 
 def test_delete_account_by_id(client_auth, session, fake):
@@ -303,6 +316,7 @@ def test_delete_account_by_id(client_auth, session, fake):
         user_id=user.id,
         account_type=fake.random_element(elements=("checking", "savings")),
         description=fake.sentence(),
+        alias=fake.unique.word(),
     )
     session.add(account)
     session.commit()
@@ -321,6 +335,7 @@ def test_delete_account_by_id(client_auth, session, fake):
     assert data["account_deleted"]["account_type"] == account.account_type
     assert data["account_deleted"]["balance"] == account.balance
     assert data["account_deleted"]["description"] == account.description
+    assert data["account_deleted"]["alias"] == account.alias
 
 
 def test_delete_account_wrong_parameters(client_auth):
@@ -331,7 +346,10 @@ def test_delete_account_wrong_parameters(client_auth):
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     data = response.json()
-    assert data["detail"] == "Either account_id or account_number must be provided"
+    assert (
+        data["detail"]
+        == "Either account_id, account_number or account_alias must be provided"
+    )
 
 
 def test_delete_account_not_found(client_auth):
@@ -339,7 +357,7 @@ def test_delete_account_not_found(client_auth):
     auth_client, _ = client_auth()
 
     response = auth_client.delete(
-        f"{ITBANK_ACCOUNTS_COMPLETE_ENDPOINT}/?acc_number=nonexistent&acc_id=9999"
+        f"{ITBANK_ACCOUNTS_COMPLETE_ENDPOINT}/?acc_number=nonexistent&acc_id=9999&acc_alias=nonexistent"
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND

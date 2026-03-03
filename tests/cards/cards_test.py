@@ -19,6 +19,7 @@ def test_get_card_list_with_cards(client_auth, session, fake):
         balance=1000.0,
         user_id=user.id,
         description=fake.text(max_nb_chars=200),
+        alias=fake.unique.word(),
     )
 
     session.add(account)
@@ -58,6 +59,7 @@ def test_get_card_list_with_multiple_cards(client_auth, session, fake):
         balance=1000.0,
         user_id=user.id,
         description=fake.text(max_nb_chars=200),
+        alias=fake.unique.word(),
     )
 
     session.add(account)
@@ -112,6 +114,7 @@ def test_create_card(client_auth, session, fake):
         balance=1000.0,
         user_id=user.id,
         description=fake.text(max_nb_chars=200),
+        alias=fake.unique.word(),
     )
 
     session.add(account)
@@ -169,6 +172,7 @@ def test_partial_update_card(client_auth, session, fake):
         balance=1000.0,
         user_id=user.id,
         description=fake.text(max_nb_chars=200),
+        alias=fake.unique.word(),
     )
 
     session.add(account)
@@ -218,6 +222,7 @@ def test_full_update_card(client_auth, session, fake):
         balance=1000.0,
         user_id=user.id,
         description=fake.text(max_nb_chars=200),
+        alias=fake.unique.word(),
     )
 
     session.add(account)
@@ -268,6 +273,7 @@ def test_full_update_card_missing_fields(client_auth, session, fake):
         balance=1000.0,
         user_id=user.id,
         description=fake.text(max_nb_chars=200),
+        alias=fake.unique.word(),
     )
 
     session.add(account)
@@ -311,6 +317,7 @@ def test_delete_card(client_auth, session, fake):
         balance=1000.0,
         user_id=user.id,
         description=fake.text(max_nb_chars=200),
+        alias=fake.unique.word(),
     )
 
     session.add(account)
