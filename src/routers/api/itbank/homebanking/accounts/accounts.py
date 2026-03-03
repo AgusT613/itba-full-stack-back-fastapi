@@ -1,6 +1,7 @@
 from src.constants.constants import ACCOUNTS_PREFIX
 from src.db.connection import SessionDep
 from typing import Annotated
+from src.lib.generate_alias import get_bank_alias
 from src.models.users import User
 from src.models.accounts import (
     BankAccount,
@@ -33,10 +34,13 @@ async def get_one_account(
     current_user: Annotated[User, Depends(get_current_user)],
     acc_number: str | None = None,
     acc_id: int | None = None,
+    acc_alias: str | None = None,
 ):
     account = session.exec(
         select(BankAccount).where(
-            (BankAccount.account_number == acc_number) | (BankAccount.id == acc_id),
+            (BankAccount.account_number == acc_number)
+            | (BankAccount.id == acc_id)
+            | (BankAccount.alias == acc_alias),
             BankAccount.user_id == current_user.id,
         )
     ).first()
@@ -60,6 +64,7 @@ async def create_account_for_user(
         account_type=bank_account.account_type,
         balance=bank_account.balance,
         description=bank_account.description,
+        alias=get_bank_alias(current_user.username),
         user_id=current_user.id,
     )
 
@@ -91,6 +96,7 @@ async def update_account_partially(
     account.account_type = bank_account.account_type or account.account_type
     account.balance = bank_account.balance or account.balance
     account.description = bank_account.description or account.description
+    account.alias = bank_account.alias or account.alias
 
     session.add(account)
     session.commit()
@@ -120,6 +126,7 @@ async def update_account_fully(
     account.account_type = bank_account.account_type
     account.balance = bank_account.balance
     account.description = bank_account.description
+    account.alias = bank_account.alias
 
     session.add(account)
     session.commit()
@@ -134,6 +141,7 @@ async def delete_account(
     current_user: Annotated[User, Depends(get_current_user)],
     acc_number: str | None = None,
     acc_id: int | None = None,
+    acc_alias: str | None = None,
 ):
 
     if acc_id:
@@ -146,10 +154,15 @@ async def delete_account(
             BankAccount.account_number == acc_number,
             BankAccount.user_id == current_user.id,
         )
+    elif acc_alias:
+        statement = select(BankAccount).where(
+            BankAccount.alias == acc_alias,
+            BankAccount.user_id == current_user.id,
+        )
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either account_id or account_number must be provided",
+            detail="Either account_id, account_number or account_alias must be provided",
         )
 
     account = session.exec(statement).first()

@@ -226,6 +226,18 @@ files = [
 ]
 
 [[package]]
+name = "coolname"
+version = "4.0.0"
+description = "Random name and slug generator"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "coolname-4.0.0-py3-none-any.whl", hash = "sha256:6eb1d5471b40b718d26ae7f25466e76fd54eb27f816d67051a9cc4f3f690f940"},
+    {file = "coolname-4.0.0.tar.gz", hash = "sha256:168ec04acbd58c4b7db39c5988a0e9daa204631dc975367adeb762b2c880d767"},
+]
+
+[[package]]
 name = "coverage"
 version = "7.13.4"
 description = "Code coverage measurement for Python"
@@ -1874,4 +1886,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13"
-content-hash = "bd38aadb674244b06a4f0575fbc539cb0bdb082c13cab737ad14360f13dd62d4"
+content-hash = "4ece9e40bd659354e7a6f545fa9f54533bf3a0ff30c658cb557ccfb0facdd3fa"

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import Annotated
 from fastapi import Depends
+from src.lib import generate_alias
 from src.models.users import User
 from src.models.accounts import BankAccount
 from fastapi.security import OAuth2PasswordRequestForm
@@ -21,6 +22,7 @@ from src.routers.api.auth.utils import (
     get_user,
 )
 from src.routers.api.auth.schemas import Token, UserModel
+from src.lib.generate_alias import get_bank_alias
 import uuid
 
 
@@ -76,6 +78,7 @@ async def register(
         account_type="personal",
         balance=0.0,
         user_id=new_user.id,
+        alias=get_bank_alias(user.username),
     )
 
     session.add(new_account),

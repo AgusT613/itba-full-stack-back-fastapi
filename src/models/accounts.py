@@ -11,6 +11,7 @@ class BankAccount(SQLModel, table=True):
     description: str | None = Field(default=None, max_length=255)
     balance: float
     account_number: str = Field(max_length=20)
+    alias: str = Field(max_length=50, unique=True)
 
     user_id: int = Field(foreign_key="users.id")
 
@@ -27,6 +28,7 @@ class BankAccountPartialUpdate(BaseModel):
     account_type: str | None = None
     description: str | None = None
     balance: float | None = None
+    alias: str | None = None
 
 
 class BankAccountFullUpdate(BaseModel):
@@ -34,3 +36,4 @@ class BankAccountFullUpdate(BaseModel):
     account_type: str
     description: str
     balance: float
+    alias: str
