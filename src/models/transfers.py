@@ -24,6 +24,8 @@ class TransferCreate(BaseModel):
 
 class TransferResponseModel(BaseModel):
     id: int
+    sender_username: str
     receiver_username: str
     balance: float
     transfer_date: datetime
+    transfer_type: str

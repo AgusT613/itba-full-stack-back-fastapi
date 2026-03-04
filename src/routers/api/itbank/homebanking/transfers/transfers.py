@@ -1,5 +1,5 @@
 from sqlmodel import select
-from src.models.transfers import Transfer, TransferCreate
+from src.models.transfers import Transfer, TransferCreate, TransferResponseModel
 from fastapi import APIRouter, Depends, HTTPException
 from src.constants.constants import TRANSFERS_PREFIX
 from src.lib.auth_utils import get_current_user
@@ -16,14 +16,31 @@ async def get_transfer_history(
     session: SessionDep,
     current_user: Annotated[User, Depends(get_current_user)],
 ):
-    transfers = session.exec(
-        select(Transfer).where(
+    results = session.exec(
+        select(Transfer, User)
+        .join(
+            User,
+            onclause=(Transfer.receiver_id == User.id | Transfer.sender_id == User.id),
+        )
+        .where(
             (Transfer.sender_id == current_user.id)
             | (Transfer.receiver_id == current_user.id)
         )
     ).all()
 
-    return transfers
+    response = [
+        TransferResponseModel(
+            id=transfer.id,
+            sender_username=current_user.username,
+            receiver_username=user.username,
+            balance=transfer.balance,
+            transfer_date=transfer.transfer_date,
+            transfer_type=transfer.transfer_type,
+        )
+        for transfer, user in results
+    ]
+
+    return response
 
 
 @router.post("/")
@@ -80,6 +97,8 @@ async def make_transfer(
         "sender": sender_account,
         "receiver": receiver_account,
         "balance": transfer.balance,
+        "transfer_date": transfer.transfer_date,
+        "transfer_type": transfer.transfer_type,
     }
 
 

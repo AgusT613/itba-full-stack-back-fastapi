@@ -57,9 +57,11 @@ async def get_homebanking(
     transfers_response = [
         TransferResponseModel(
             id=transfer.id,
+            sender_username=current_user.username,
             receiver_username=user.username,
             balance=transfer.balance,
             transfer_date=transfer.transfer_date,
+            transfer_type=transfer.transfer_type,
         )
         for transfer, user in transfers
     ]
