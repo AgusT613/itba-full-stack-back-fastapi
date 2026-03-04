@@ -2,7 +2,7 @@ from sqlmodel import select
 from src.models.transfers import Transfer, TransferCreate
 from fastapi import APIRouter, Depends, HTTPException
 from src.constants.constants import TRANSFERS_PREFIX
-from src.routers.api.auth.utils import get_current_user
+from src.lib.auth_utils import get_current_user
 from src.db.connection import SessionDep
 from typing import Annotated
 from src.models.users import User

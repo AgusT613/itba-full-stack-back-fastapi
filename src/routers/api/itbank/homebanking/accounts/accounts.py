@@ -10,7 +10,7 @@ from src.models.accounts import (
     BankAccountFullUpdate,
 )
 from fastapi import Depends, HTTPException, APIRouter, status
-from src.routers.api.auth.utils import get_current_user
+from src.lib.auth_utils import get_current_user
 from sqlmodel import select
 
 router = APIRouter(prefix=ACCOUNTS_PREFIX, dependencies=[Depends(get_current_user)])

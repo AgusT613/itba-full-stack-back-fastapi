@@ -15,13 +15,13 @@ from src.constants.constants import (
     INCORRECT_USERNAME_OR_PASSWORD,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
-from src.routers.api.auth.utils import (
+from src.lib.auth_utils import (
     authenticate_user,
     create_access_token,
     get_password_hash,
     get_user,
 )
-from src.routers.api.auth.schemas import Token, UserModel
+from src.models.auth import Token, UserModel
 from src.lib.generate_alias import get_bank_alias
 
 

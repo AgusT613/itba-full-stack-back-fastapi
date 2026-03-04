@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from src.routers.api.auth.utils import get_current_user
+from src.lib.auth_utils import get_current_user
 from src.db.connection import SessionDep
 from sqlmodel import select
 from src.models.cards import Card, CardCreate, CardPartialUpdate, CardFullUpdate
 from src.models.accounts import BankAccount
 from src.models.users import User
 from typing import Annotated
-from src.routers.api.auth.utils import get_password_hash
+from src.lib.auth_utils import get_password_hash
 
 router = APIRouter(prefix="/cards", dependencies=[Depends(get_current_user)])
 

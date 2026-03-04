@@ -1,6 +1,6 @@
 from sqlmodel import select
 from fastapi import APIRouter, Depends, HTTPException, status
-from src.routers.api.auth.utils import get_current_user
+from src.lib.auth_utils import get_current_user
 from src.db.connection import SessionDep
 from typing import Annotated
 from src.models.users import User

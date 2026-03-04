@@ -15,7 +15,7 @@ from src.constants.constants import (
     ALGORITHM,
     TOKEN_URL,
 )
-from src.routers.api.auth.schemas import TokenData
+from src.models.auth import TokenData
 
 
 password_hash = PasswordHash.recommended()

@@ -6,7 +6,7 @@ from src.db.connection import SessionDep
 from src.models.accounts import BankAccount
 from src.models.cards import Card, CardResponseModel
 from src.models.transfers import Transfer, TransferResponseModel
-from src.routers.api.auth.utils import get_current_user
+from src.lib.auth_utils import get_current_user
 from src.models.users import User, UserHomebankingInfo, UserResponseModel
 from .accounts.accounts import router as accounts_router
 from .transfers.transfers import router as transfers_router
