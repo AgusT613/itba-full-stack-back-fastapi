@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from src.db.connection import SessionDep
 from src.lib.auth_utils import get_current_user
+from src.models.user_saved_aliases import UserSavedAlias
 from src.models.users import User
 from typing import Annotated
 from src.models.accounts import BankAccount
@@ -43,3 +44,35 @@ async def get_itbank_alias(
         )
 
     return {"alias": account.alias}
+
+
+@router.post("/save/{alias}")
+async def save_alias(
+    alias: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: SessionDep,
+):
+    account = session.exec(
+        select(BankAccount).where(BankAccount.alias == alias)
+    ).first()
+
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account with alias not found"
+        )
+
+    alias = session.exec(
+        select(UserSavedAlias).where(UserSavedAlias.alias == alias)
+    ).first()
+
+    if alias:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Alias already saved"
+        )
+
+    new_alias = UserSavedAlias(user_id=current_user.id, alias=account.alias)
+    session.add(new_alias)
+    session.commit()
+    session.refresh(new_alias)
+
+    return new_alias
