@@ -13,6 +13,7 @@ from .transfers.transfers import router as transfers_router
 from .cards.cards import router as cards_router
 from .loans.loans import router as loans_router
 from .alias.alias import router as alias_router
+from .deposit.deposit import router as deposit_router
 
 
 router = APIRouter(prefix=HOME_BANKING_PREFIX, dependencies=[Depends(get_current_user)])
@@ -21,6 +22,7 @@ router.include_router(transfers_router)
 router.include_router(cards_router)
 router.include_router(loans_router)
 router.include_router(alias_router)
+router.include_router(deposit_router)
 
 
 @router.get("/")

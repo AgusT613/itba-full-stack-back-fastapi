@@ -10,6 +10,7 @@ class Transfer(SQLModel, table=True):
     sender_id: int = Field(foreign_key="users.id")
     receiver_id: int = Field(foreign_key="users.id")
     balance: float = Field(default=0.0)
+    transfer_type: str = Field(default="transfer")
     transfer_date: datetime = Field(
         sa_column_kwargs={"server_default": func.now()}, nullable=False
     )
