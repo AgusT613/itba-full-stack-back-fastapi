@@ -4,7 +4,7 @@ from tests.utils import _create_user
 from fastapi import status
 
 
-def test_get_my_accounts_no_accounts(client_auth):
+def test_get_my_accounts_itbank_account(client_auth):
     """Test retrieving user's accounts when they have no accounts"""
     auth_client, _ = client_auth()
 
@@ -12,7 +12,8 @@ def test_get_my_accounts_no_accounts(client_auth):
 
     assert response.status_code == 200
     data = response.json()
-    assert data == []
+    assert len(data) == 1
+    assert data[0]["account_type"] == "itbank"
 
 
 def test_get_account_details_not_found(client_auth):
@@ -67,7 +68,7 @@ def test_get_my_accounts_with_accounts(client_auth, session, fake):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 2
+    assert len(data) == 3  # 2 created accounts + 1 from client_auth fixture
     assert any(acc["account_number"] == str(account1.account_number) for acc in data)
     assert any(acc["account_number"] == str(account2.account_number) for acc in data)
 
@@ -131,8 +132,8 @@ def test_get_my_accounts_only_returns_own_accounts(client_auth, session, fake):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["account_number"] == user1_account.account_number
+    assert len(data) == 2
+    assert data[1]["account_number"] == user1_account.account_number
 
 
 def test_get_account_details_with_invalid_format(client_auth):

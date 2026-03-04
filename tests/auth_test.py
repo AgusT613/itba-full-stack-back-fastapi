@@ -17,7 +17,7 @@ def test_auth_register_user(client, fake):
     assert response.status_code == 201
     data = response.json()
     assert data["user"]["username"] == new_user["username"]
-    assert data["bank_account"]["account_type"] == "personal"
+    assert data["bank_account"]["account_type"] == "itbank"
 
 
 def test_auth_get_token(client, session, fake):

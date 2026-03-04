@@ -34,8 +34,8 @@ async def make_transfer(
 ):
     sender_account = session.exec(
         select(BankAccount).where(
-            BankAccount.user_id == current_user.id
-            and BankAccount.alias == transfer.sender_alias
+            BankAccount.user_id == current_user.id,
+            BankAccount.alias == transfer.sender_alias,
         )
     ).first()
 

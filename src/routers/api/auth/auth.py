@@ -74,7 +74,7 @@ async def register(
     new_account = BankAccount(
         description="ITBANK account",
         account_number=generate_account_number(),
-        account_type="personal",
+        account_type="itbank",
         balance=0.0,
         user_id=new_user.id,
         alias=get_bank_alias(user.username),

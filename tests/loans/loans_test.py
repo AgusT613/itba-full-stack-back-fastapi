@@ -130,7 +130,9 @@ def test_request_loan(client_auth, session, fake):
     response = client.post("/api/homebanking/loans", json=loan.model_dump())
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
-    assert data["account"]["id"] == 1
+    assert (
+        data["account"]["id"] == 2
+    )  # Assuming this is the second account created in the test database
     assert data["account"]["user_id"] == 1
     assert data["loan"]["user_id"] == user.id
     assert data["loan"]["branch_office_id"] == loan.branch_office_id

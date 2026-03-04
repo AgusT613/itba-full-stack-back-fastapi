@@ -65,7 +65,7 @@ def test_transfer_history_with_transfers(client_auth, session, fake):
     assert data["receiver"]["balance"] == 800.0
 
     response = auth_client.get(ITBANK_TRANSFERS_COMPLETE_ENDPOINT)
-    response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert len(data) == 1
     assert data[0]["balance"] == 300.0

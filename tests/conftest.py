@@ -1,10 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 from src.db.connection import get_session
 from faker import Faker
 from src.main import app
+from src.models.users import User
 from .utils import _create_user
 
 
@@ -43,7 +44,14 @@ def client_auth_fixture(client, fake, session):
         username = username or fake.user_name()
         password = password or fake.password()
 
-        user = _create_user(session, username=username, password=password, fake=fake)
+        response = client.post(
+            "/api/auth/register",
+            json={"username": username, "password": password},
+        )
+
+        assert response.status_code == 201
+
+        user = session.exec(select(User).where(User.username == username)).first()
 
         response = client.post(
             "/api/auth/token",
