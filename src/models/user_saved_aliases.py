@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlmodel import SQLModel, Field
 
 
@@ -6,4 +7,9 @@ class UserSavedAlias(SQLModel, table=True):
 
     id: int = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id")
+    alias: str
+
+
+class UserSavedAliasResponseModel(BaseModel):
+    id: int
     alias: str

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from src.db.connection import SessionDep
 from src.lib.auth_utils import get_current_user
-from src.models.user_saved_aliases import UserSavedAlias
+from src.models.user_saved_aliases import UserSavedAlias, UserSavedAliasResponseModel
 from src.models.users import User
 from typing import Annotated
 from src.models.accounts import BankAccount
@@ -46,6 +46,26 @@ async def get_itbank_alias(
     return {"alias": account.alias}
 
 
+@router.get("/save")
+async def get_saved_aliases(
+    current_user: Annotated[User, Depends(get_current_user)], session: SessionDep
+):
+    aliases = session.exec(
+        select(UserSavedAlias).where(UserSavedAlias.user_id == current_user.id)
+    ).all()
+
+    if not aliases:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No saved aliases found"
+        )
+
+    response = [
+        UserSavedAliasResponseModel(id=alias.id, alias=alias.alias) for alias in aliases
+    ]
+
+    return response
+
+
 @router.post("/save/{alias}")
 async def save_alias(
     alias: str,
@@ -75,4 +95,4 @@ async def save_alias(
     session.commit()
     session.refresh(new_alias)
 
-    return new_alias
+    return UserSavedAliasResponseModel(id=new_alias.id, alias=new_alias.alias)
