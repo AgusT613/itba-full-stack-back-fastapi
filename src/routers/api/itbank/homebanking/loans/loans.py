@@ -159,11 +159,6 @@ async def delete_loan(
         )
     ).first()
 
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Associated account not found"
-        )
-
     account.balance -= loan.amount
 
     session.delete(loan)
