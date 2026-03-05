@@ -105,6 +105,61 @@ def test_get_card_list_with_multiple_cards(client_auth, session, fake):
     assert card2.id in card_ids
 
 
+def test_get_card_by_id(client_auth, session, fake):
+    client, user = client_auth()
+
+    account = BankAccount(
+        account_number=fake.bban(),
+        account_type="checking",
+        balance=1000.0,
+        user_id=user.id,
+        description=fake.text(max_nb_chars=200),
+        alias=fake.unique.word(),
+    )
+
+    session.add(account)
+    session.commit()
+    session.refresh(account)
+
+    card = Card(
+        account_id=account.id,
+        user_id=user.id,
+        card_type="debit",
+        last_four="1234",
+        card_holder_name=fake.name(),
+        expiration_date=fake.future_date(),
+        brand="Visa",
+        status="active",
+        hashed_pin=fake.password(),
+    )
+
+    session.add(card)
+    session.commit()
+    session.refresh(card)
+
+    response = client.get(f"/api/homebanking/cards/{card.id}")
+    assert response.status_code == status.HTTP_200_OK
+    card_data = response.json()
+    assert card_data["id"] == card.id
+    assert card_data["account_id"] == account.id
+    assert card_data["user_id"] == user.id
+    assert card_data["card_type"] == "debit"
+    assert card_data["last_four"] == "1234"
+    assert card_data["card_holder_name"] == card.card_holder_name
+    assert card_data["expiration_date"].split("T")[0] == card.expiration_date.strftime(
+        "%Y-%m-%d"
+    )
+    assert card_data["brand"] == "Visa"
+    assert card_data["status"] == "active"
+
+
+def test_get_card_by_id_not_found(client_auth):
+    client, _ = client_auth()
+    response = client.get("/api/homebanking/cards/9999")  # Non-existent card ID
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["detail"] == "Card not found"
+
+
 def test_create_card(client_auth, session, fake):
     client, user = client_auth()
 
@@ -213,6 +268,16 @@ def test_partial_update_card(client_auth, session, fake):
     assert updated_card["brand"] == "Visa"  # Unchanged
 
 
+def test_partial_update_card_not_found(client_auth):
+    client, _ = client_auth()
+    update_data = {"status": "inactive"}
+    response = client.patch(
+        "/api/homebanking/cards/9999", json=update_data
+    )  # Non-existent card ID
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["detail"] == "Card not found"
+
+
 def test_full_update_card(client_auth, session, fake):
     client, user = client_auth()
 
@@ -262,6 +327,21 @@ def test_full_update_card(client_auth, session, fake):
         updated_card["expiration_date"].split("T")[0] == update_data["expiration_date"]
     )
     assert updated_card["status"] == "inactive"
+
+
+def test_full_update_card_not_found(client_auth, fake):
+    client, _ = client_auth()
+    update_data = {
+        "card_type": "credit",
+        "card_holder_name": fake.name(),
+        "expiration_date": str(fake.future_date()),
+        "status": "inactive",
+    }
+    response = client.put(
+        "/api/homebanking/cards/9999", json=update_data
+    )  # Non-existent card ID
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["detail"] == "Card not found"
 
 
 def test_full_update_card_missing_fields(client_auth, session, fake):
@@ -351,3 +431,10 @@ def test_delete_card(client_auth, session, fake):
     assert data["deleted_card"]["brand"] == "Visa"
     assert data["deleted_card"]["account_id"] == account.id
     assert data["deleted_card"]["user_id"] == user.id
+
+
+def test_delete_card_not_found(client_auth):
+    client, _ = client_auth()
+    response = client.delete("/api/homebanking/cards/9999")  # Non-existent card ID
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["detail"] == "Card not found"
