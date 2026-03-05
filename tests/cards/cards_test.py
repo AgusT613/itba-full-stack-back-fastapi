@@ -142,7 +142,6 @@ def test_get_card_by_id(client_auth, session, fake):
     card_data = response.json()
     assert card_data["id"] == card.id
     assert card_data["account_id"] == account.id
-    assert card_data["user_id"] == user.id
     assert card_data["card_type"] == "debit"
     assert card_data["last_four"] == "1234"
     assert card_data["card_holder_name"] == card.card_holder_name
@@ -430,7 +429,6 @@ def test_delete_card(client_auth, session, fake):
     assert data["deleted_card"]["status"] == "active"
     assert data["deleted_card"]["brand"] == "Visa"
     assert data["deleted_card"]["account_id"] == account.id
-    assert data["deleted_card"]["user_id"] == user.id
 
 
 def test_delete_card_not_found(client_auth):

@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.lib.auth_utils import get_current_user
 from src.db.connection import SessionDep
 from sqlmodel import select
-from src.models.cards import Card, CardCreate, CardPartialUpdate, CardFullUpdate
+from src.models.cards import (
+    Card,
+    CardCreate,
+    CardPartialUpdate,
+    CardFullUpdate,
+    CardResponseModel,
+)
 from src.models.accounts import BankAccount
 from src.models.users import User
 from typing import Annotated
@@ -17,7 +23,21 @@ async def get_card_list(
 ):
     cards = session.exec(select(Card).where(Card.user_id == current_user.id)).all()
 
-    return cards
+    response = [
+        CardResponseModel(
+            id=card.id,
+            account_id=card.account_id,
+            card_type=card.card_type,
+            last_four=card.last_four,
+            card_holder_name=card.card_holder_name,
+            expiration_date=card.expiration_date,
+            brand=card.brand,
+            status=card.status,
+        )
+        for card in cards
+    ]
+
+    return response
 
 
 @router.get("/{card_id}")
@@ -39,7 +59,18 @@ async def get_card_details(
             status_code=status.HTTP_404_NOT_FOUND, detail="Card not found"
         )
 
-    return card
+    response = CardResponseModel(
+        id=card.id,
+        account_id=card.account_id,
+        card_type=card.card_type,
+        last_four=card.last_four,
+        card_holder_name=card.card_holder_name,
+        expiration_date=card.expiration_date,
+        brand=card.brand,
+        status=card.status,
+    )
+
+    return response
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -73,7 +104,18 @@ async def create_card(
     session.commit()
     session.refresh(new_card)
 
-    return new_card
+    response = CardResponseModel(
+        id=new_card.id,
+        account_id=new_card.account_id,
+        card_type=new_card.card_type,
+        last_four=new_card.last_four,
+        card_holder_name=new_card.card_holder_name,
+        expiration_date=new_card.expiration_date,
+        brand=new_card.brand,
+        status=new_card.status,
+    )
+
+    return response
 
 
 @router.patch("/{card_id}")
@@ -103,7 +145,18 @@ async def update_card(
     session.commit()
     session.refresh(card)
 
-    return card
+    response = CardResponseModel(
+        id=card.id,
+        account_id=card.account_id,
+        card_type=card.card_type,
+        last_four=card.last_four,
+        card_holder_name=card.card_holder_name,
+        expiration_date=card.expiration_date,
+        brand=card.brand,
+        status=card.status,
+    )
+
+    return response
 
 
 @router.put("/{card_id}")
@@ -135,7 +188,18 @@ async def replace_card(
     session.commit()
     session.refresh(card)
 
-    return card
+    response = CardResponseModel(
+        id=card.id,
+        account_id=card.account_id,
+        card_type=card.card_type,
+        last_four=card.last_four,
+        card_holder_name=card.card_holder_name,
+        expiration_date=card.expiration_date,
+        brand=card.brand,
+        status=card.status,
+    )
+
+    return response
 
 
 @router.delete("/{card_id}")
@@ -160,4 +224,15 @@ async def delete_card(
     session.delete(card)
     session.commit()
 
-    return {"detail": "Card deleted successfully", "deleted_card": card}
+    response = CardResponseModel(
+        id=card.id,
+        account_id=card.account_id,
+        card_type=card.card_type,
+        last_four=card.last_four,
+        card_holder_name=card.card_holder_name,
+        expiration_date=card.expiration_date,
+        brand=card.brand,
+        status=card.status,
+    )
+
+    return {"detail": "Card deleted successfully", "deleted_card": response}
