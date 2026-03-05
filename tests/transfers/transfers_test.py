@@ -69,8 +69,10 @@ def test_transfer_history_with_transfers(client_auth, session, fake):
     data = response.json()
     assert len(data) == 1
     assert data[0]["balance"] == 300.0
-    assert data[0]["sender_id"] == sender.id
-    assert data[0]["receiver_id"] == receiver.id
+    assert data[0]["sender_username"] == sender.username
+    assert data[0]["receiver_username"] == receiver.username
+    assert data[0]["transfer_type"] == "transfer"
+    assert data[0]["transfer_date"] is not None
 
 
 def test_transfer_insufficient_funds(client_auth, session, fake):

@@ -7,6 +7,7 @@ from src.db.connection import SessionDep
 from typing import Annotated
 from src.models.users import User
 from src.models.accounts import BankAccount
+from sqlalchemy.orm import aliased
 
 router = APIRouter(prefix=TRANSFERS_PREFIX, dependencies=[Depends(get_current_user)])
 
@@ -16,12 +17,13 @@ async def get_transfer_history(
     session: SessionDep,
     current_user: Annotated[User, Depends(get_current_user)],
 ):
+    Sender = aliased(User)
+    Receiver = aliased(User)
+
     results = session.exec(
-        select(Transfer, User)
-        .join(
-            User,
-            onclause=(Transfer.receiver_id == User.id | Transfer.sender_id == User.id),
-        )
+        select(Transfer, Sender, Receiver)
+        .join(Sender, Transfer.sender_id == Sender.id)
+        .join(Receiver, Transfer.receiver_id == Receiver.id)
         .where(
             (Transfer.sender_id == current_user.id)
             | (Transfer.receiver_id == current_user.id)
@@ -31,13 +33,13 @@ async def get_transfer_history(
     response = [
         TransferResponseModel(
             id=transfer.id,
-            sender_username=current_user.username,
-            receiver_username=user.username,
+            sender_username=sender.username,
+            receiver_username=receiver.username,
             balance=transfer.balance,
             transfer_date=transfer.transfer_date,
             transfer_type=transfer.transfer_type,
         )
-        for transfer, user in results
+        for transfer, sender, receiver in results
     ]
 
     return response
