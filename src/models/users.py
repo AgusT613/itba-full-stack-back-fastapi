@@ -1,23 +1,32 @@
 from sqlmodel import SQLModel, Field
 from src.constants.constants import USERS
-from pydantic import BaseModel
 
 
-class User(SQLModel, table=True):
-    __tablename__ = USERS
-    id: int | None = Field(default=None, primary_key=True)
+class UserBase(SQLModel):
     username: str = Field(max_length=255)
-    email: str = Field(max_length=255)
-    full_name: str = Field(max_length=255)
+    # TODO: Add unique constraint to email and remove default value
+    email: str = Field(max_length=255, default="")
+    full_name: str = Field(max_length=255, default="")
+
+
+class User(UserBase, table=True):
+    __tablename__ = USERS
+
+    id: int | None = Field(default=None, primary_key=True)
     disabled: bool
     hashed_password: str
 
 
-class UserHomebankingInfo(BaseModel):
+class UserRegister(SQLModel):
     username: str
-    email: str
-    full_name: str
+    password: str
+    email: str | None = None
+    full_name: str | None = None
 
 
-class UserResponseModel(UserHomebankingInfo):
+class UserHomebankingInfo(UserBase):
+    pass
+
+
+class UserResponseModel(UserBase):
     id: int

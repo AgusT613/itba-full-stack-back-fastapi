@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from src.models.users import UserBase
+from src.models.accounts import BankAccount
 
 
 class Token(BaseModel):
@@ -10,6 +12,6 @@ class TokenData(BaseModel):
     username: str | None = None
 
 
-class UserModel(BaseModel):
-    username: str
-    password: str
+class RegisterResponse(BaseModel):
+    user: UserBase
+    bank_account: BankAccount

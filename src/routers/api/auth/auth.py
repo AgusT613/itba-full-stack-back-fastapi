@@ -21,17 +21,18 @@ from src.lib.auth_utils import (
     get_password_hash,
     get_user,
 )
-from src.models.auth import Token, UserModel
+from src.models.auth import RegisterResponse, Token
+from src.models.users import UserRegister
 from src.lib.generate_alias import get_bank_alias
 
 
 router = APIRouter(prefix=AUTH_PREFIX)
 
 
-@router.post(AUTH_POST_TOKEN)
+@router.post(AUTH_POST_TOKEN, response_model=Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep
-) -> Token:
+):
     user = authenticate_user(session, form_data.username, form_data.password)
 
     if not user:
@@ -49,9 +50,13 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.post(AUTH_POST_REGISTER, status_code=status.HTTP_201_CREATED)
+@router.post(
+    AUTH_POST_REGISTER,
+    status_code=status.HTTP_201_CREATED,
+    response_model=RegisterResponse,
+)
 async def register(
-    user: UserModel,
+    user: UserRegister,
     session: SessionDep,
 ):
     user_found = get_user(session, username=user.username)
@@ -62,8 +67,8 @@ async def register(
     hashed_password = get_password_hash(user.password)
     new_user = User(
         username=user.username,
-        email="",
-        full_name="",
+        email=user.email,
+        full_name=user.full_name,
         hashed_password=hashed_password,
         disabled=False,
     )
