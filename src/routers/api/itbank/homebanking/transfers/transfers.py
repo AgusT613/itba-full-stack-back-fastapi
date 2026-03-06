@@ -9,7 +9,11 @@ from src.models.users import User
 from src.models.accounts import BankAccount
 from sqlalchemy.orm import aliased
 
-router = APIRouter(prefix=TRANSFERS_PREFIX, dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix=TRANSFERS_PREFIX,
+    dependencies=[Depends(get_current_user)],
+    tags=["transfers"],
+)
 
 
 @router.get("/")

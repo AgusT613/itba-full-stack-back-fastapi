@@ -8,7 +8,9 @@ from src.models.users import User
 from typing import Annotated
 from src.models.deposit import DepositCreate
 
-router = APIRouter(prefix="/deposit", dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/deposit", dependencies=[Depends(get_current_user)], tags=["deposit"]
+)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

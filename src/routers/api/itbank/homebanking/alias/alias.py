@@ -7,7 +7,9 @@ from typing import Annotated
 from src.models.accounts import BankAccount
 from sqlmodel import select
 
-router = APIRouter(prefix="/alias", dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/alias", dependencies=[Depends(get_current_user)], tags=["alias"]
+)
 
 
 @router.get("/all")

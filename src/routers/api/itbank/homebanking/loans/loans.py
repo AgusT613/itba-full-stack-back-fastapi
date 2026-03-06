@@ -7,7 +7,9 @@ from src.models.users import User
 from src.models.accounts import BankAccount
 from src.models.loans import Loan, LoanCreate, LoanFullUpdate, LoanPartialUpdate
 
-router = APIRouter(prefix="/loans", dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/loans", dependencies=[Depends(get_current_user)], tags=["loans"]
+)
 
 
 @router.get("/")

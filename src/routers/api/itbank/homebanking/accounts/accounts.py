@@ -13,7 +13,9 @@ from fastapi import Depends, HTTPException, APIRouter, status
 from src.lib.auth_utils import get_current_user
 from sqlmodel import select
 
-router = APIRouter(prefix=ACCOUNTS_PREFIX, dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix=ACCOUNTS_PREFIX, dependencies=[Depends(get_current_user)], tags=["accounts"]
+)
 
 
 @router.get("/")

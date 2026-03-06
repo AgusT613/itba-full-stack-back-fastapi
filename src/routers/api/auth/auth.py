@@ -26,7 +26,7 @@ from src.models.users import UserRegister
 from src.lib.generate_alias import get_bank_alias
 
 
-router = APIRouter(prefix=AUTH_PREFIX)
+router = APIRouter(prefix=AUTH_PREFIX, tags=["auth"])
 
 
 @router.post(AUTH_POST_TOKEN, response_model=Token)

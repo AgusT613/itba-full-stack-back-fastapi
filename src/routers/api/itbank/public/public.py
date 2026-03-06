@@ -5,7 +5,7 @@ from sqlmodel import select
 from src.models.branch_offices import BranchOffice
 from faker import Faker
 
-router = APIRouter(prefix=ITBANK_PREFIX)
+router = APIRouter(prefix=ITBANK_PREFIX, tags=["branch-offices"])
 fake = Faker(locale="es_AR")
 
 

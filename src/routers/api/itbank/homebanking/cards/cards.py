@@ -14,7 +14,9 @@ from src.models.users import User
 from typing import Annotated
 from src.lib.auth_utils import get_password_hash
 
-router = APIRouter(prefix="/cards", dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/cards", dependencies=[Depends(get_current_user)], tags=["cards"]
+)
 
 
 @router.get("/")
