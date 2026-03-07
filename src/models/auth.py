@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from src.models.users import UserBase
+from src.models.users import UserResponseModel
 from src.models.accounts import BankAccount
 
 
@@ -12,6 +12,5 @@ class TokenData(BaseModel):
     username: str | None = None
 
 
-class RegisterResponse(BaseModel):
-    user: UserBase
-    bank_account: BankAccount
+class RegisterResponse(UserResponseModel, BankAccount):
+    pass

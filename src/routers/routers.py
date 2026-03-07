@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from src.constants.constants import API_PREFIX, AUTH_ROUTER_TAG, ITBANK_ROUTER_TAG
+from src.constants.constants import API_PREFIX
 from src.routers.api.itbank import itbank
 from src.routers.api.auth import auth
 

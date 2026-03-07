@@ -90,4 +90,7 @@ async def register(
     session.refresh(new_user)
     session.refresh(new_account)
 
-    return {"user": new_user, "bank_account": new_account}
+    return {
+        **new_user.model_dump(),
+        **new_account.model_dump(),
+    }

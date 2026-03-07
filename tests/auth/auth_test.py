@@ -16,8 +16,17 @@ def test_auth_register_user(client, fake):
 
     assert response.status_code == 201
     data = response.json()
-    assert data["user"]["username"] == new_user["username"]
-    assert data["bank_account"]["account_type"] == "itbank"
+    assert data["username"] == new_user["username"]
+    assert data["email"] is not None
+    assert data["full_name"] is not None
+    assert not hasattr(data, "disabled")
+    assert not hasattr(data, "hashed_password")
+    assert data["account_type"] == "itbank"
+    assert data["account_number"] is not None
+    assert data["description"] == "ITBANK account"
+    assert data["balance"] == 0.0
+    assert data["user_id"] == data["id"]
+    assert data["id"] is not None
 
 
 def test_auth_register_user_existing_username(client, session, fake):

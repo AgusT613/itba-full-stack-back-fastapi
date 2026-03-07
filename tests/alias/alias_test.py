@@ -53,16 +53,7 @@ def test_get_saved_aliases_no_aliases(client_auth):
 
 def test_post_save_alias(client_auth, session, fake):
     client, _ = client_auth()
-    other_client, other_user = client_auth()
-
-    response = other_client.post(
-        "/api/auth/register",
-        json={"username": fake.user_name(), "password": "password123"},
-    )
-    assert response.status_code == status.HTTP_201_CREATED
-    data = response.json()
-    assert "user" in data
-    assert "bank_account" in data
+    _, other_user = client_auth()
 
     other_user_account = session.exec(
         select(BankAccount).where(BankAccount.user_id == other_user.id)
@@ -85,16 +76,7 @@ def test_post_save_alias_other_user_account_not_found(client_auth):
 
 def test_post_save_alias_already_saved(client_auth, session, fake):
     client, _ = client_auth()
-    other_client, other_user = client_auth()
-
-    response = other_client.post(
-        "/api/auth/register",
-        json={"username": fake.user_name(), "password": "password123"},
-    )
-    assert response.status_code == status.HTTP_201_CREATED
-    data = response.json()
-    assert "user" in data
-    assert "bank_account" in data
+    _, other_user = client_auth()
 
     other_user_account = session.exec(
         select(BankAccount).where(BankAccount.user_id == other_user.id)
