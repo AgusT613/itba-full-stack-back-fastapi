@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.lib.auth_utils import get_current_user
-from src.db.connection import SessionDep
+from src.dependencies import SessionDep
 from sqlmodel import select
 from src.models.cards import (
     Card,

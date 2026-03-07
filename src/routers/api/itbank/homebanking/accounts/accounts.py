@@ -1,5 +1,5 @@
 from src.constants.constants import ACCOUNTS_PREFIX
-from src.db.connection import SessionDep
+from src.dependencies import SessionDep
 from typing import Annotated
 from src.lib.generate_alias import get_bank_alias
 from src.models.users import User

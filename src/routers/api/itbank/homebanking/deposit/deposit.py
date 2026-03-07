@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlmodel import select
-from src.db.connection import SessionDep
+from src.dependencies import SessionDep
 from src.lib.auth_utils import get_current_user
 from src.models.accounts import BankAccount
 from src.models.transfers import Transfer

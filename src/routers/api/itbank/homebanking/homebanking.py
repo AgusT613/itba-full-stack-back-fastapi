@@ -2,7 +2,7 @@ from sqlmodel import select
 from typing import Annotated
 from fastapi import APIRouter, Depends
 from src.constants.constants import HOME_BANKING_PREFIX
-from src.db.connection import SessionDep
+from src.dependencies import SessionDep
 from src.models.accounts import BankAccount
 from src.models.cards import Card, CardResponseModel
 from src.models.transfers import Transfer, TransferResponseModel

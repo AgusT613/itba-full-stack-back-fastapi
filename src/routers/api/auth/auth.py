@@ -5,7 +5,7 @@ from src.lib.generate_account_number import generate_account_number
 from src.models.users import User
 from src.models.accounts import BankAccount
 from fastapi.security import OAuth2PasswordRequestForm
-from src.db.connection import SessionDep
+from src.dependencies import SessionDep
 from datetime import timedelta
 from src.constants.constants import (
     ALREADY_REGISTERED_USER,

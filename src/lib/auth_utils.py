@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
 from sqlmodel import select
 from src.models.users import User
-from src.db.connection import SessionDep
+from src.dependencies import SessionDep
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt.exceptions import InvalidTokenError

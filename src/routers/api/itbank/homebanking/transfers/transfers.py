@@ -3,7 +3,7 @@ from src.models.transfers import Transfer, TransferCreate, TransferResponseModel
 from fastapi import APIRouter, Depends, HTTPException
 from src.constants.constants import TRANSFERS_PREFIX
 from src.lib.auth_utils import get_current_user
-from src.db.connection import SessionDep
+from src.dependencies import SessionDep
 from typing import Annotated
 from src.models.users import User
 from src.models.accounts import BankAccount

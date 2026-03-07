@@ -1,12 +1,11 @@
 from fastapi import APIRouter, HTTPException, status
 from src.constants.constants import ITBANK_BRANCH_OFFICES, ITBANK_PREFIX
-from src.db.connection import SessionDep
+from src.dependencies import SessionDep
 from sqlmodel import select
 from src.models.branch_offices import BranchOffice
-from faker import Faker
+from src.dependencies import FakerDep
 
 router = APIRouter(prefix=ITBANK_PREFIX, tags=["branch-offices"])
-fake = Faker(locale="es_AR")
 
 
 @router.get(ITBANK_BRANCH_OFFICES)
@@ -15,7 +14,7 @@ async def read_item(session: SessionDep):
 
 
 @router.post(ITBANK_BRANCH_OFFICES)
-async def create_branch_office(session: SessionDep):
+async def create_branch_office(session: SessionDep, fake: FakerDep):
     new_branch_office = BranchOffice(
         name=fake.company(),
         address=fake.address(),
