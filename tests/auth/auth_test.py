@@ -3,7 +3,7 @@ from src.constants.constants import (
     AUTH_GET_TOKEN_COMPLETE_ENDPOINT,
 )
 from src.models.users import User
-from src.lib.auth_utils import get_password_hash
+from src.utils.password import get_password_hash
 
 
 def test_auth_register_user(client, fake):

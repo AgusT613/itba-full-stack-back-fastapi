@@ -1,8 +1,6 @@
 from src.constants.constants import ACCOUNTS_PREFIX
-from src.dependencies import SessionDep
-from typing import Annotated
-from src.lib.generate_alias import get_bank_alias
-from src.models.users import User
+from src.db.connection import SessionDep
+from src.utils.text_generation import get_bank_alias
 from src.models.accounts import (
     BankAccount,
     BankAccountCreate,
@@ -10,8 +8,9 @@ from src.models.accounts import (
     BankAccountFullUpdate,
 )
 from fastapi import Depends, HTTPException, APIRouter, status
-from src.lib.auth_utils import get_current_user
+from src.utils.auth_user import get_current_user
 from sqlmodel import select
+from src.utils.auth_user import CurrentUserDep
 
 router = APIRouter(
     prefix=ACCOUNTS_PREFIX, dependencies=[Depends(get_current_user)], tags=["accounts"]
@@ -21,7 +20,7 @@ router = APIRouter(
 @router.get("/")
 async def get_my_accounts(
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     accounts = session.exec(
         select(BankAccount).where(BankAccount.user_id == current_user.id)
@@ -33,7 +32,7 @@ async def get_my_accounts(
 @router.get("/by/")
 async def get_one_account(
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     acc_number: str | None = None,
     acc_id: int | None = None,
     acc_alias: str | None = None,
@@ -59,7 +58,7 @@ async def get_one_account(
 async def create_account_for_user(
     bank_account: BankAccountCreate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     new_account = BankAccount(
         account_number=bank_account.account_number,
@@ -81,7 +80,7 @@ async def create_account_for_user(
 async def update_account_partially(
     bank_account: BankAccountPartialUpdate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     account = session.exec(
         select(BankAccount).where(
@@ -111,7 +110,7 @@ async def update_account_partially(
 async def update_account_fully(
     bank_account: BankAccountFullUpdate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     account = session.exec(
         select(BankAccount).where(
@@ -140,7 +139,7 @@ async def update_account_fully(
 @router.delete("/")
 async def delete_account(
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     acc_number: str | None = None,
     acc_id: int | None = None,
     acc_alias: str | None = None,

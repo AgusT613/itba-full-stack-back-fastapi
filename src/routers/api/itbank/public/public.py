@@ -1,11 +1,16 @@
 from fastapi import APIRouter, HTTPException, status
 from src.constants.constants import ITBANK_BRANCH_OFFICES, ITBANK_PREFIX
-from src.dependencies import SessionDep
+from src.db.connection import SessionDep
 from sqlmodel import select
 from src.models.branch_offices import BranchOffice
-from src.dependencies import FakerDep
+from src.utils.text_generation import FakerDep
 
 router = APIRouter(prefix=ITBANK_PREFIX, tags=["branch-offices"])
+
+
+@router.head("/server-alive")
+async def is_server_alive():
+    return {"response": "ok"}
 
 
 @router.get(ITBANK_BRANCH_OFFICES)

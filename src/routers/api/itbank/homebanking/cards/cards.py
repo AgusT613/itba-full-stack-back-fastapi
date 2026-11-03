@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from src.lib.auth_utils import get_current_user
-from src.dependencies import SessionDep
+from src.utils.auth_user import get_current_user, CurrentUserDep
+from src.db.connection import SessionDep
 from sqlmodel import select
 from src.models.cards import (
     Card,
@@ -11,8 +11,7 @@ from src.models.cards import (
 )
 from src.models.accounts import BankAccount
 from src.models.users import User
-from typing import Annotated
-from src.lib.auth_utils import get_password_hash
+from src.utils.password import get_password_hash
 
 router = APIRouter(
     prefix="/cards", dependencies=[Depends(get_current_user)], tags=["cards"]
@@ -20,9 +19,7 @@ router = APIRouter(
 
 
 @router.get("/")
-async def get_card_list(
-    session: SessionDep, current_user: Annotated[User, Depends(get_current_user)]
-):
+async def get_card_list(session: SessionDep, current_user: CurrentUserDep):
     cards = session.exec(select(Card).where(Card.user_id == current_user.id)).all()
 
     response = [
@@ -46,7 +43,7 @@ async def get_card_list(
 async def get_card_details(
     card_id: int,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     card = session.exec(
         select(Card).where(
@@ -79,7 +76,7 @@ async def get_card_details(
 async def create_card(
     card: CardCreate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     account = session.exec(
         select(BankAccount).where(BankAccount.id == card.account_id)
@@ -125,7 +122,7 @@ async def update_card(
     card_id: int,
     card_update: CardPartialUpdate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     card = session.exec(
         select(Card).where(
@@ -166,7 +163,7 @@ async def replace_card(
     card_id: int,
     card_update: CardFullUpdate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     card = session.exec(
         select(Card).where(
@@ -208,7 +205,7 @@ async def replace_card(
 async def delete_card(
     card_id: int,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     card = session.exec(
         select(Card).where(

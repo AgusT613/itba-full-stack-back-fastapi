@@ -1,10 +1,8 @@
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from pwdlib import PasswordHash
-from sqlmodel import select
 from src.models.users import User
-from src.dependencies import SessionDep
+from src.db.connection import SessionDep
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -16,24 +14,10 @@ from src.constants.constants import (
     TOKEN_URL,
 )
 from src.models.auth import TokenData
+from src.db.user import get_user
+from .password import verify_password
 
-
-password_hash = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=TOKEN_URL)
-
-
-def verify_password(plain_password, hashed_password):
-    return password_hash.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    return password_hash.hash(password)
-
-
-def get_user(session: SessionDep, username: str):
-    user = session.exec(select(User).where(User.username == username)).first()
-
-    return user
 
 
 def authenticate_user(session: SessionDep, username: str, password: str):
@@ -88,8 +72,11 @@ async def get_current_user(
     return user
 
 
+CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail=INACTIVE_USER)

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import Annotated
 from fastapi import Depends
-from src.lib.generate_account_number import generate_account_number
+from src.utils.text_generation import generate_account_number
 from src.models.users import User
 from src.models.accounts import BankAccount
 from fastapi.security import OAuth2PasswordRequestForm
-from src.dependencies import SessionDep
+from src.db.connection import SessionDep
 from datetime import timedelta
 from src.constants.constants import (
     ALREADY_REGISTERED_USER,
@@ -15,16 +15,15 @@ from src.constants.constants import (
     INCORRECT_USERNAME_OR_PASSWORD,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
-from src.lib.auth_utils import (
+from src.utils.auth_user import (
     authenticate_user,
     create_access_token,
-    get_password_hash,
-    get_user,
 )
 from src.models.auth import RegisterResponse, Token
 from src.models.users import UserRegister
-from src.lib.generate_alias import get_bank_alias
-
+from src.utils.text_generation import get_bank_alias
+from src.utils.password import get_password_hash
+from src.db.user import get_user
 
 router = APIRouter(prefix=AUTH_PREFIX, tags=["auth"])
 

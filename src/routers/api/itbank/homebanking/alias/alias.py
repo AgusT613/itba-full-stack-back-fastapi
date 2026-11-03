@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
-from src.dependencies import SessionDep
-from src.lib.auth_utils import get_current_user
+from src.db.connection import SessionDep
+from src.utils.auth_user import get_current_user, CurrentUserDep
 from src.models.user_saved_aliases import UserSavedAlias, UserSavedAliasResponseModel
-from src.models.users import User
-from typing import Annotated
 from src.models.accounts import BankAccount
 from sqlmodel import select
 
@@ -13,9 +11,7 @@ router = APIRouter(
 
 
 @router.get("/all")
-async def get_aliases(
-    current_user: Annotated[User, Depends(get_current_user)], session: SessionDep
-):
+async def get_aliases(current_user: CurrentUserDep, session: SessionDep):
     accounts = session.exec(
         select(BankAccount).where(BankAccount.user_id == current_user.id)
     ).all()
@@ -31,9 +27,7 @@ async def get_aliases(
 
 
 @router.get("/itbank")
-async def get_itbank_alias(
-    current_user: Annotated[User, Depends(get_current_user)], session: SessionDep
-):
+async def get_itbank_alias(current_user: CurrentUserDep, session: SessionDep):
     account = session.exec(
         select(BankAccount).where(
             BankAccount.user_id == current_user.id, BankAccount.account_type == "itbank"
@@ -49,9 +43,7 @@ async def get_itbank_alias(
 
 
 @router.get("/save")
-async def get_saved_aliases(
-    current_user: Annotated[User, Depends(get_current_user)], session: SessionDep
-):
+async def get_saved_aliases(current_user: CurrentUserDep, session: SessionDep):
     aliases = session.exec(
         select(UserSavedAlias).where(UserSavedAlias.user_id == current_user.id)
     ).all()
@@ -71,7 +63,7 @@ async def get_saved_aliases(
 @router.post("/save/{alias}")
 async def save_alias(
     alias: str,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     session: SessionDep,
 ):
     account = session.exec(

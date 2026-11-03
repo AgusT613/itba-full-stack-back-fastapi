@@ -2,9 +2,8 @@ from sqlmodel import select
 from src.models.transfers import Transfer, TransferCreate, TransferResponseModel
 from fastapi import APIRouter, Depends, HTTPException
 from src.constants.constants import TRANSFERS_PREFIX
-from src.lib.auth_utils import get_current_user
-from src.dependencies import SessionDep
-from typing import Annotated
+from src.utils.auth_user import get_current_user, CurrentUserDep
+from src.db.connection import SessionDep
 from src.models.users import User
 from src.models.accounts import BankAccount
 from sqlalchemy.orm import aliased
@@ -19,7 +18,7 @@ router = APIRouter(
 @router.get("/")
 async def get_transfer_history(
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     Sender = aliased(User)
     Receiver = aliased(User)
@@ -53,7 +52,7 @@ async def get_transfer_history(
 async def make_transfer(
     transfer: TransferCreate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     sender_account = session.exec(
         select(BankAccount).where(
@@ -112,7 +111,7 @@ async def make_transfer(
 async def delete_transfer(
     transfer_id: int,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     transfer = session.exec(
         select(Transfer).where(

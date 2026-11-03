@@ -1,9 +1,7 @@
 from sqlmodel import select
 from fastapi import APIRouter, Depends, HTTPException, status
-from src.lib.auth_utils import get_current_user
-from src.dependencies import SessionDep
-from typing import Annotated
-from src.models.users import User
+from src.utils.auth_user import get_current_user, CurrentUserDep
+from src.db.connection import SessionDep
 from src.models.accounts import BankAccount
 from src.models.loans import Loan, LoanCreate, LoanFullUpdate, LoanPartialUpdate
 
@@ -13,9 +11,7 @@ router = APIRouter(
 
 
 @router.get("/")
-async def get_loan_list(
-    session: SessionDep, current_user: Annotated[User, Depends(get_current_user)]
-):
+async def get_loan_list(session: SessionDep, current_user: CurrentUserDep):
     loans = session.exec(select(Loan).where(Loan.user_id == current_user.id)).all()
 
     return loans
@@ -25,7 +21,7 @@ async def get_loan_list(
 async def get_loan_by_id(
     loan_id: int,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     loan = session.exec(
         select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)
@@ -44,7 +40,7 @@ async def get_loan_by_id(
 async def request_loan(
     loan: LoanCreate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     user_account = session.exec(
         select(BankAccount).where(
@@ -88,7 +84,7 @@ async def request_loan(
 async def partial_update_loan(
     loan_id: int,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     updated_loan_data: LoanPartialUpdate,
 ):
     loan = session.exec(
@@ -115,7 +111,7 @@ async def partial_update_loan(
 async def full_update_loan(
     loan_id: int,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     updated_loan_data: LoanFullUpdate,
 ):
     loan = session.exec(
@@ -142,7 +138,7 @@ async def full_update_loan(
 async def delete_loan(
     loan_id: int,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     loan = session.exec(
         select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)

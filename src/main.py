@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.constants.constants import HOMEBANKING_FRONTEND_URL
 from dotenv import load_dotenv
 
-load_dotenv()
+if not load_dotenv():
+    print("No dotenv file could be set")
 
 
 @asynccontextmanager
@@ -16,7 +17,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-origins = [HOMEBANKING_FRONTEND_URL, "http://localhost:3000"]
+origins = [HOMEBANKING_FRONTEND_URL]
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(api_router)

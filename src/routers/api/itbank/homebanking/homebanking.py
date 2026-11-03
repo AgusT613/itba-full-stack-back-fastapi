@@ -1,12 +1,11 @@
 from sqlmodel import select
-from typing import Annotated
 from fastapi import APIRouter, Depends
 from src.constants.constants import HOME_BANKING_PREFIX
-from src.dependencies import SessionDep
+from src.db.connection import SessionDep
 from src.models.accounts import BankAccount
 from src.models.cards import Card, CardResponseModel
 from src.models.transfers import Transfer, TransferResponseModel
-from src.lib.auth_utils import get_current_user
+from src.utils.auth_user import get_current_user
 from src.models.users import User, UserHomebankingInfo, UserResponseModel
 from .accounts.accounts import router as accounts_router
 from .transfers.transfers import router as transfers_router
@@ -14,7 +13,7 @@ from .cards.cards import router as cards_router
 from .loans.loans import router as loans_router
 from .alias.alias import router as alias_router
 from .deposit.deposit import router as deposit_router
-
+from src.utils.auth_user import CurrentUserDep
 
 router = APIRouter(prefix=HOME_BANKING_PREFIX, dependencies=[Depends(get_current_user)])
 router.include_router(accounts_router)
@@ -27,7 +26,7 @@ router.include_router(deposit_router)
 
 @router.get("/")
 async def get_homebanking(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     session: SessionDep,
 ):
     bank_account = session.exec(
@@ -80,7 +79,7 @@ async def get_homebanking(
 
 @router.get("/me")
 async def get_current_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     user = UserHomebankingInfo(
         email=current_user.email,

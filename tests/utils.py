@@ -1,6 +1,6 @@
 from sqlmodel import Session
 from src.models.users import User
-from src.lib.auth_utils import get_password_hash
+from src.utils.password import get_password_hash
 from faker import Faker
 
 

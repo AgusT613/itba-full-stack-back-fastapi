@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlmodel import select
-from src.dependencies import SessionDep
-from src.lib.auth_utils import get_current_user
+from src.db.connection import SessionDep
+from src.utils.auth_user import get_current_user, CurrentUserDep
 from src.models.accounts import BankAccount
 from src.models.transfers import Transfer
 from src.models.users import User
-from typing import Annotated
 from src.models.deposit import DepositCreate
 
 router = APIRouter(
@@ -17,7 +16,7 @@ router = APIRouter(
 async def create_deposit(
     deposit: DepositCreate,
     session: SessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     account = session.exec(
         select(BankAccount).where(
