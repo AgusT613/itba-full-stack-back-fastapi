@@ -4,6 +4,7 @@
 > **Repository Context:** ITBA Full-Stack Course Backend Application  
 > **Primary Framework:** FastAPI (Python 3.13+) with SQLModel / SQLite  
 > **Current Working Branch:** `refactor`  
+> **Architecture Pattern:** 3-Tier Layered Architecture (Routers → Services → Repositories)  
 > **Target Audience:** Autonomous coding agents (Antigravity, Cursor, Claude Code, Copilot) and human developers.
 
 ---
@@ -32,7 +33,7 @@ This repository implements the backend REST API for **ITBANK**, a fictitious hom
 | **Database** | SQLite | File (`src/database.db`) / In-Memory (`sqlite://`) for tests | Persistence layer |
 | **Authentication** | PyJWT | `^2.10.1` | JSON Web Token encoding, decoding, and validation |
 | **Password Security** | pwdlib[argon2] | `^0.3.0` | Password and PIN hashing via Argon2id |
-| **Configuration** | python-dotenv | `^1.2.1` | `.env` variable loading |
+| **Configuration** | python-dotenv / pytest-dotenv | `^1.2.1` / `^0.5.2` | `.env` variable loading for dev and tests |
 | **Testing** | Pytest + Pytest-cov | `^9.0.2` / `^7.0.0` | Unit & integration testing with coverage metrics |
 | **HTTP Testing** | Starlette TestClient / HTTPX | Built-in | Endpoint test client |
 | **Mocking / Utilities**| Faker + Coolname | `^40.44.0` / `^4.0.0` | Dynamic test fixture data and bank alias generation |
@@ -42,78 +43,75 @@ This repository implements the backend REST API for **ITBANK**, a fictitious hom
 
 ## 3. Architecture & Routing Hierarchy
 
-### 3.1 Architecture Overview
+### 3.1 3-Tier Layered Architecture
 
-The system follows a modular FastAPI architecture utilizing Dependency Injection (`fastapi.Depends`) for database sessions (`SessionDep` from `src.db.connection`), current authenticated user resolution (`CurrentUserDep` from `src.utils.auth_user`), and test fixtures / mock data providers (`FakerDep` from `src.utils.text_generation`).
+The application adopts a **3-Tier Layered Architecture** separating presentation, business logic, and persistence:
 
 ```mermaid
 flowchart TD
     Client["Client Request"] --> CORS["CORSMiddleware (FastAPI)"]
     CORS --> RootRouter["api_router (/api)"]
     
-    RootRouter --> AuthRouter["Auth Router (/auth)\n- /token\n- /register"]
-    RootRouter --> ITBankRouter["ITBank Router (/itbank)"]
+    subgraph Presentation["1. Presentation Layer (Routers)"]
+        RootRouter --> AuthRouter["Auth Router (/auth)"]
+        RootRouter --> PublicRouter["Public Router (/branch-offices)"]
+        RootRouter --> HomebankingRouter["Homebanking Router (/homebanking)"]
+    end
     
-    ITBankRouter --> PublicRouter["Public Router (/branch-offices)\n- /branch-offices\n- HEAD /server-alive"]
-    ITBankRouter --> HomebankingRouter["Homebanking Router (/homebanking)\n[Depends: get_current_user]"]
+    subgraph ServiceLayer["2. Service Layer (Business Logic & Orchestration)"]
+        AuthRouter --> AuthService["AuthService"]
+        PublicRouter --> BranchService["BranchService"]
+        HomebankingRouter --> HBService["HomebankingService"]
+        HomebankingRouter --> AccService["AccountService"]
+        HomebankingRouter --> TransferService["TransferService"]
+        HomebankingRouter --> CardService["CardService"]
+        HomebankingRouter --> LoanService["LoanService"]
+        HomebankingRouter --> AliasService["AliasService"]
+    end
     
-    HomebankingRouter --> HBMain["Dashboard Aggregator (GET /)"]
-    HomebankingRouter --> Accounts["Accounts Router (/accounts)"]
-    HomebankingRouter --> Transfers["Transfers Router (/transfers)"]
-    HomebankingRouter --> Cards["Cards Router (/cards)"]
-    HomebankingRouter --> Loans["Loans Router (/loans)"]
-    HomebankingRouter --> Alias["Alias Router (/alias)"]
-    HomebankingRouter --> Deposit["Deposit Router (/deposit)"]
+    subgraph Repositories["3. Data Access Layer (Repositories)"]
+        AuthService --> UserRepo["UserRepository"]
+        AuthService --> AccRepo["AccountRepository"]
+        BranchService --> BranchRepo["BranchRepository"]
+        HBService --> AccRepo
+        HBService --> CardRepo["CardRepository"]
+        HBService --> TransferRepo["TransferRepository"]
+        HBService --> UserRepo
+        AccService --> AccRepo
+        TransferService --> TransferRepo
+        TransferService --> AccRepo
+        CardService --> CardRepo
+        CardService --> AccRepo
+        LoanService --> LoanRepo["LoanRepository"]
+        LoanService --> AccRepo
+        AliasService --> AliasRepo["AliasRepository"]
+        AliasService --> AccRepo
+    end
     
-    AuthRouter --> SQLite[("SQLite Database")]
-    HomebankingRouter --> SQLite
-    PublicRouter --> SQLite
+    Repositories --> SQLite[("SQLite Database")]
 ```
 
-### 3.2 Endpoint Tree
+### 3.2 Layer Rules & Responsibilities
 
-- **`/api/auth`** (`tags=["auth"]`)
-  - `POST /register`: Register user and automatically provision an ITBANK checking account with generated account number and alias.
-  - `POST /token`: Authenticate with form credentials (`username`, `password`) and receive a Bearer JWT.
-- **`/api/itbank`** (`tags=["branch-offices"]`)
-  - `HEAD /server-alive`: Lightweight server healthcheck returning `{"response": "ok"}`.
-  - `GET /branch-offices`: List all physical branch offices.
-  - `POST /branch-offices`: Create a branch office (uses `FakerDep` generator).
-  - `DELETE /branch-offices/{branch_office_id}`: Delete a branch office.
-- **`/api/itbank/homebanking`** (`tags=["homebanking"]`, protected by `get_current_user`)
-  - `GET /`: Aggregate dashboard data (current user, ITBANK account, cards, transfers).
-  - `GET /me`: Authenticated user profile.
-  - `GET /users`: List all registered users (IDs, emails, usernames, names).
-- **`/api/itbank/homebanking/accounts`** (`tags=["accounts"]`)
-  - `GET /`: List all accounts owned by current user.
-  - `GET /by/`: Query single account by `acc_number`, `acc_id`, or `acc_alias`.
-  - `POST /`: Create additional account for user.
-  - `PATCH /`: Partial update of account attributes.
-  - `PUT /`: Full update of account attributes.
-  - `DELETE /`: Delete account by ID, number, or alias.
-- **`/api/itbank/homebanking/transfers`** (`tags=["transfers"]`)
-  - `GET /`: Transfer history where user is sender or receiver.
-  - `POST /`: Execute funds transfer between accounts by alias.
-  - `DELETE /{transfer_id}`: Delete a transfer record.
-- **`/api/itbank/homebanking/cards`** (`tags=["cards"]`)
-  - `GET /`: List all cards owned by current user.
-  - `GET /{card_id}`: Get card details.
-  - `POST /`: Issue card linked to an account with hashed PIN.
-  - `PATCH /{card_id}` / `PUT /{card_id}`: Partial/full update.
-  - `DELETE /{card_id}`: Remove card.
-- **`/api/itbank/homebanking/loans`** (`tags=["loans"]`)
-  - `GET /`: List user loans.
-  - `GET /{loan_id}`: Get loan detail.
-  - `POST /`: Request loan, calculate repayment, and credit funds to account.
-  - `PATCH /{loan_id}` / `PUT /{loan_id}`: Update loan status/installments.
-  - `DELETE /{loan_id}`: Delete loan and deduct balance.
-- **`/api/itbank/homebanking/alias`** (`tags=["alias"]`)
-  - `GET /all`: User account aliases.
-  - `GET /itbank`: Default ITBANK account alias.
-  - `GET /save`: User saved beneficiary aliases.
-  - `POST /save/{alias}`: Save alias to address book.
-- **`/api/itbank/homebanking/deposit`** (`tags=["deposit"]`)
-  - `POST /`: Deposit money into account by alias.
+1. **Routers (`src/routers/api/...`):**
+   - Thin controllers declaring routes, path parameters, query parameters, and Pydantic bodies.
+   - Inject service dependencies (e.g. `AccountServiceDep`, `TransferServiceDep`, `CurrentUserDep`).
+   - Call service methods and return response models or status codes.
+   - **No SQL queries or raw session mutations allowed in routers.**
+
+2. **Services (`src/services/...`):**
+   - Encapsulate business rules, validation, mathematical calculations, and coordination across repositories.
+   - Orchestrate atomic operations and database commits.
+   - Raise domain exceptions from `src.exceptions` (e.g., `EntityNotFoundError`, `InsufficientFundsError`, `InvalidOperationError`).
+   - Free from HTTP knowledge (no `HTTPException`, no status codes).
+
+3. **Repositories (`src/repositories/...`):**
+   - Inherit from `BaseRepository[T]` for standard CRUD operations (`get_by_id`, `list_all`, `add`, `delete`, `commit`, `refresh`, `flush`).
+   - Implement optimized, explicit queries preventing Cartesian joins.
+   - Pure data access without business validation logic.
+
+4. **Exception Handlers (`src/handlers/...`):**
+   - Global exception handler maps `BankingException` subclasses into standard JSON responses (`{"detail": ...}`) with appropriate HTTP status codes (400, 403, 404).
 
 ---
 
@@ -121,19 +119,25 @@ flowchart TD
 
 ```text
 itba_full_stack_back_fastapi/
-├── pyproject.toml              # Project metadata, dependencies, and pytest configuration
+├── pyproject.toml              # Dependencies (including pytest-dotenv) and pytest config
 ├── poetry.lock                 # Locked dependency graph
 ├── .env                        # Local development environment configuration
 ├── .env.test                   # Test environment variables
-├── TODO.md                     # Roadmap and immediate developer TODO items
+├── TODO.md                     # Immediate developer roadmap items
 ├── AGENTS.md                   # AI Developer and Agent Operational Manual (this file)
 ├── src/
-│   ├── main.py                 # FastAPI application instantiation, lifespan, CORS, dotenv loader
+│   ├── main.py                 # FastAPI app, lifespan, CORS, exception handlers registration
 │   ├── constants/
 │   │   └── constants.py        # Route prefixes, table names, JWT parameters, error messages
-│   ├── db/                     # Persistence & DB query helpers
+│   ├── db/                     # DB engine & session
 │   │   ├── connection.py       # Engine creation, SessionDep, create_db_and_tables
-│   │   └── user.py             # User queries (get_user helper)
+│   │   └── user.py             # User lookup query helper
+│   ├── exceptions/             # Pure domain exception definitions
+│   │   ├── __init__.py
+│   │   └── banking_exceptions.py # BankingException, EntityNotFoundError, InsufficientFundsError, etc.
+│   ├── handlers/               # Global FastAPI exception handlers
+│   │   ├── __init__.py
+│   │   └── exception_handlers.py # Maps domain exceptions to HTTP JSON responses
 │   ├── models/                 # SQLModel tables and Pydantic schemas
 │   │   ├── accounts.py         # BankAccount table & request/update models
 │   │   ├── auth.py             # Token & RegisterResponse models
@@ -145,23 +149,43 @@ itba_full_stack_back_fastapi/
 │   │   ├── transfers.py        # Transfer table & response/create models
 │   │   ├── user_saved_aliases.py # UserSavedAlias table & response models
 │   │   └── users.py            # User table & registration/profile models
-│   ├── routers/                # Modular router definitions
+│   ├── repositories/           # Data access layer (SQLModel queries)
+│   │   ├── __init__.py
+│   │   ├── base.py             # Generic BaseRepository[T]
+│   │   ├── account_repository.py # BankAccount queries
+│   │   ├── alias_repository.py   # UserSavedAlias queries
+│   │   ├── branch_repository.py  # BranchOffice queries
+│   │   ├── card_repository.py    # Card queries (clean joins, no Cartesian products)
+│   │   ├── loan_repository.py    # Loan queries
+│   │   ├── transfer_repository.py # Transfer queries with aliased user joins
+│   │   └── user_repository.py    # User queries
+│   ├── services/               # Business logic & domain orchestration
+│   │   ├── __init__.py
+│   │   ├── account_service.py    # AccountService & AccountServiceDep
+│   │   ├── alias_service.py      # AliasService & AliasServiceDep
+│   │   ├── auth_service.py       # AuthService & AuthServiceDep
+│   │   ├── branch_service.py     # BranchService & BranchServiceDep
+│   │   ├── card_service.py       # CardService & CardServiceDep
+│   │   ├── homebanking_service.py# HomebankingService & HomebankingServiceDep
+│   │   ├── loan_service.py       # LoanService & LoanServiceDep
+│   │   └── transfer_service.py   # TransferService & TransferServiceDep
+│   ├── routers/                # Presentation layer (thin controllers)
 │   │   ├── routers.py          # Merges itbank and auth routers under /api
 │   │   └── api/
 │   │       ├── auth/
-│   │       │   └── auth.py     # Auth login and register routes
+│   │       │   └── auth.py     # Injects AuthServiceDep
 │   │       └── itbank/
 │   │           ├── itbank.py   # Merges public and homebanking routers
 │   │           ├── public/
-│   │           │   └── public.py # Branch offices endpoints & /server-alive health check
+│   │           │   └── public.py # Injects BranchServiceDep
 │   │           └── homebanking/
-│   │               ├── homebanking.py # Main homebanking dashboard & sub-routers
-│   │               ├── accounts/accounts.py
-│   │               ├── alias/alias.py
-│   │               ├── cards/cards.py
-│   │               ├── deposit/deposit.py
-│   │               ├── loans/loans.py
-│   │               └── transfers/transfers.py
+│   │               ├── homebanking.py # Injects HomebankingServiceDep
+│   │               ├── accounts/accounts.py # Injects AccountServiceDep
+│   │               ├── alias/alias.py       # Injects AliasServiceDep
+│   │               ├── cards/cards.py       # Injects CardServiceDep
+│   │               ├── deposit/deposit.py   # Injects TransferServiceDep
+│   │               ├── loans/loans.py       # Injects LoanServiceDep
+│   │               └── transfers/transfers.py # Injects TransferServiceDep
 │   └── utils/                  # Domain utilities, security, and dependency providers
 │       ├── auth_user.py        # Token issuance, get_current_user, CurrentUserDep
 │       ├── password.py         # Argon2 password hashing and verification
@@ -303,119 +327,58 @@ erDiagram
 
 ### 6.3 Executing Tests
 
-Because `pytest-dotenv` is currently missing from `pyproject.toml`, test runs require either setting environment variables explicitly or loading `.env.test`:
+With `pytest-dotenv` installed, `.env.test` is loaded automatically during test execution:
 
 ```bash
-# Recommended command to run all tests
-AUTH_SECRET_KEY="test_secret_key" ALGORITHM="HS256" poetry run pytest
+# Run all tests
+poetry run pytest
 
-# Run tests with coverage
-AUTH_SECRET_KEY="test_secret_key" ALGORITHM="HS256" poetry run pytest --cov=src -vv
+# Run tests with verbose output
+poetry run pytest -vv
+
+# Run tests with coverage metrics
+poetry run pytest --cov=src -vv
 ```
 
 ---
 
-## 7. Critical Bugs, Technical Debt & Anti-Patterns
+## 7. Resolved Items & Remaining Technical Debt
 
-When modifying or refactoring this codebase, agents **must** be aware of the following known issues:
+### 7.1 Resolved Issues
+- [x] **Layered Architecture Implemented:** Separated presentation (`routers`), business logic (`services`), and data persistence (`repositories`).
+- [x] **Cartesian Product Queries Eliminated:** `CardRepository` and `AccountRepository` perform direct, indexed lookups avoiding cross joins. 0 `SAWarning` occurrences in the entire test suite.
+- [x] **Test Configuration (`pytest-dotenv`):** Added `pytest-dotenv = "^0.5.2"` to `pyproject.toml`. Pytest now passes completely without manual env variable exports.
+- [x] **Dependency Injection Standardized:** Consolidated session, current user, and mock fixtures into `SessionDep`, `CurrentUserDep`, and `FakerDep`.
 
-### 7.1 SQLAlchemy Cartesian Product Queries (Severe Warning)
-In `cards/cards.py` and `deposit/deposit.py`, queries reference unjoined tables in `.where()` clauses:
-- **`cards.py`:**
-  ```python
-  # BAD: Introduces Cartesian product between `users` and `bank_accounts`
-  card = session.exec(
-      select(Card).where(
-          Card.id == card_id,
-          Card.account_id == BankAccount.id,
-          User.id == current_user.id,
-      )
-  ).first()
-  ```
-  **Fix:** Since `Card` already has `user_id`, use:
-  ```python
-  card = session.exec(
-      select(Card).where(Card.id == card_id, Card.user_id == current_user.id)
-  ).first()
-  ```
-- **`deposit.py`:**
-  ```python
-  # BAD: References User.id without join
-  account = session.exec(
-      select(BankAccount).where(
-          User.id == current_user.id, BankAccount.alias == deposit.alias
-      )
-  ).first()
-  ```
-  **Fix:**
-  ```python
-  account = session.exec(
-      select(BankAccount).where(
-          BankAccount.user_id == current_user.id, BankAccount.alias == deposit.alias
-      )
-  ).first()
-  ```
-
-### 7.2 Inconsistent Foreign Key Relations
+### 7.2 Remaining Technical Debt & Domain Opportunities
 - **Loan Account Reference (`loans.py`):**  
   `user_account_id: int = Field(foreign_key="bank_accounts.user_id")`  
   This references `bank_accounts.user_id` instead of `bank_accounts.id` (the primary key).
-- **Transfer Sender/Receiver vs Deposit (`transfers.py` vs `deposit.py`):**  
-  In `transfers.py`, `sender_id` and `receiver_id` store `User.id`.  
-  In `deposit.py`, `sender_id` and `receiver_id` are set to `account.id`. This breaks relational consistency and joins in transfer history queries.
-
-### 7.3 Concurrency & Missing Transaction Isolation
-- Transfer operations (`make_transfer`), deposits, and loan balance disbursements perform multiple read-modify-write steps without row locks (`with_for_update()`) or atomic database transactions. Under concurrent requests, race conditions will result in lost updates or double-spending.
-
-### 7.4 Floating-Point Currency
-- All monetary balances (`balance`, `amount`, `total_repayment`) use `float`. In financial software, this leads to floating-point rounding errors. They should be refactored to `Decimal` or integer cents.
-
-### 7.5 Unsafe Deletions (Financial Audit Trails)
-- `delete_transfer` deletes transactions from the database without balance reversal or audit history. In banking domains, financial transactions must be immutable.
-- `delete_loan` decrements the principal amount from the user account balance without taking accrued interest, installments paid, or minimum balances into account.
-
-### 7.6 Alias Collision Logic in `save_alias`
-- In `src/routers/api/itbank/homebanking/alias/alias.py`:
-  ```python
-  alias = session.exec(
-      select(UserSavedAlias).where(UserSavedAlias.alias == alias)
-  ).first()
-  if alias:
-      raise HTTPException(status_code=400, detail="Alias already saved")
-  ```
-  This checks whether **any user in the entire database** has saved the alias. User B cannot save an alias if User A has already saved it. The query must filter by `UserSavedAlias.user_id == current_user.id`.
-
-### 7.7 Completed Dependency Injection Refactor
-- The legacy `src/dependencies.py`, `src/lib/`, and intermediate `src/core/` folders have been successfully superseded:
-  - Database sessions are consolidated into `SessionDep` (`src.db.connection`).
-  - Current user authentication is consolidated into `CurrentUserDep` (`src.utils.auth_user`).
-  - Mock providers are consolidated into `FakerDep` (`src.utils.text_generation`).
-  - All router handlers consistently utilize these typed annotations.
-
-### 7.8 Configuration & Testing Gotchas
-- `src/constants/constants.py` reads `os.getenv("AUTH_SECRET_KEY")` at import time. If imported before `load_dotenv()` runs (or in tests without `pytest-dotenv`), `SECRET_KEY` evaluates to `None`, causing JWT encoding to throw `TypeError: Expected a string value`.
-- Add `pytest-dotenv` to dependencies so `[tool.pytest.ini_options] env_files = [".env.test"]` takes effect automatically.
+- **Concurrency & Missing Row Locks:**  
+  Transfer and balance modifications should incorporate row locks (`select(...).with_for_update()`) to safeguard high-concurrency environments.
+- **Floating-Point Currency:**  
+  All monetary balances (`balance`, `amount`, `total_repayment`) currently use `float`. In financial software, this should ideally be refactored to `Decimal` (SQLAlchemy `Numeric`).
+- **Audit Trails vs Raw Deletions:**  
+  `delete_transfer` deletes transactions from the database without balance reversal or audit history. Transactions in financial domains should be immutable (soft delete or reversal records).
 
 ---
 
 ## 8. Prioritized Improvement Roadmap
 
 ### Phase 1: High Priority / Stability Fixes
-- [x] Complete dependency injection refactor and align imports across all routers (`SessionDep`, `CurrentUserDep`, `FakerDep`).
-- [ ] Add `pytest-dotenv = "^0.5.2"` to `pyproject.toml` to fix standalone `poetry run pytest` executions.
-- [ ] Fix Cartesian product queries in `cards.py` and `deposit.py`.
-- [ ] Fix `UserSavedAlias` lookup query in `alias.py` to filter by `current_user.id`.
+- [x] Complete dependency injection refactor (`SessionDep`, `CurrentUserDep`, `FakerDep`).
+- [x] Add `pytest-dotenv = "^0.5.2"` to `pyproject.toml`.
+- [x] Fix Cartesian product queries across all repositories.
+- [x] Introduce Service and Repository layers to decouple business logic from FastAPI routers.
 - [ ] Correct foreign key on `Loan.user_account_id` to point to `bank_accounts.id`.
-- [ ] Align `deposit.py` transfer record to use `user_id` instead of `account_id` (or standardize `Transfer` on `account_id`).
 
 ### Phase 2: Domain Integrity & Financial Correctness
-- [ ] Wrap balance adjustments and transfers inside atomic transactions (`with session.begin():`).
+- [ ] Wrap balance adjustments and transfers inside row-level locks (`with_for_update()`).
 - [ ] Refactor monetary balances from `float` to `Decimal` (SQLAlchemy `Numeric` / Pydantic `Decimal`).
 - [ ] Prohibit raw deletion of financial transaction logs (`Transfer`); replace with status / reversal records.
-- [ ] Implement checks for negative transfer amounts and overdraft limits.
+- [ ] Implement checks for overdraft limits and account freezes.
 
 ### Phase 3: Architecture & Security Hardening
-- [ ] Introduce a Service / Repository layer to decouple business logic from FastAPI routers.
 - [ ] Implement database migrations using Alembic rather than relying on `SQLModel.metadata.create_all()` at startup.
 - [ ] Restrict `GET /homebanking/users` (currently leaks all user emails and names to any authenticated client).
 - [ ] Add refresh tokens and revocation / blacklist mechanisms for JWTs.
@@ -427,11 +390,14 @@ In `cards/cards.py` and `deposit/deposit.py`, queries reference unjoined tables 
 
 When implementing features, refactoring, or fixing bugs in this repository, follow these rules:
 
-1. **Always Verify Tests First:** Run the test suite before and after making changes. If tests fail with `TypeError: Expected a string value`, verify `AUTH_SECRET_KEY` and `ALGORITHM` are loaded into the environment.
-2. **Prevent Cartesian Queries:** Never include multiple models in a `.where()` clause without explicitly joining them using `.join()`. Prefer querying by direct foreign keys on the model being selected.
-3. **Preserve Router Contract & Prefix Structure:** Route paths must respect `API_PREFIX` (`/api`), `ITBANK_PREFIX` (`/itbank`), and `HOME_BANKING_PREFIX` (`/homebanking`). Do not duplicate prefixes in sub-routers.
-4. **Use Established Dependency Injection:**
-   - Database sessions must use `SessionDep` from `src.db.connection`.
-   - Current authenticated user must use `CurrentUserDep` from `src.utils.auth_user`.
-   - Mock data in routers/tests must use `FakerDep` from `src.utils.text_generation` or `fake` fixture.
-5. **Maintain Documentation Integrity:** If you modify endpoint contracts, update OpenAPI docstrings, models, and this `AGENTS.md` file accordingly.
+1. **Adhere to the 3-Tier Layered Architecture:**
+   - **Routers** handle HTTP routing, validate request schemas, and delegate directly to services. Never query or commit to the database directly in a router.
+   - **Services** orchestrate business workflows, handle transaction commits, and raise typed exceptions from `src.exceptions`.
+   - **Repositories** extend `BaseRepository` and encapsulate all SQLModel queries.
+2. **Prevent Cartesian Queries:** Never reference unjoined tables in a `.where()` clause. Always use direct foreign key filters or explicit `.join()` methods.
+3. **Use Established Dependency Injection:**
+   - Services must be injected into routers using their typed dependency (e.g., `AccountServiceDep`, `TransferServiceDep`).
+   - Authenticated user context must use `CurrentUserDep` from `src.utils.auth_user`.
+   - Sessions must use `SessionDep` from `src.db.connection`.
+4. **Preserve Router Contract & Prefix Structure:** Route paths must respect `API_PREFIX` (`/api`), `ITBANK_PREFIX` (`/itbank`), and `HOME_BANKING_PREFIX` (`/homebanking`).
+5. **Always Verify Tests First:** Execute `poetry run pytest` before and after modifications. Ensure no warnings or failures are introduced.

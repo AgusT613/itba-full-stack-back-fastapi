@@ -1,9 +1,7 @@
-from .connection import SessionDep
-from sqlmodel import select
+from sqlmodel import Session
 from src.models.users import User
+from src.repositories.user_repository import UserRepository
 
 
-def get_user(session: SessionDep, username: str):
-    user = session.exec(select(User).where(User.username == username)).first()
-
-    return user
+def get_user(session: Session, username: str) -> User | None:
+    return UserRepository(session).get_by_username(username)

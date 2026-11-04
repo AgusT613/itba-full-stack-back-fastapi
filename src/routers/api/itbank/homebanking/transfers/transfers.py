@@ -1,12 +1,8 @@
-from sqlmodel import select
-from src.models.transfers import Transfer, TransferCreate, TransferResponseModel
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from src.constants.constants import TRANSFERS_PREFIX
-from src.utils.auth_user import get_current_user, CurrentUserDep
-from src.db.connection import SessionDep
-from src.models.users import User
-from src.models.accounts import BankAccount
-from sqlalchemy.orm import aliased
+from src.models.transfers import TransferCreate
+from src.services.transfer_service import TransferServiceDep
+from src.utils.auth_user import CurrentUserDep, get_current_user
 
 router = APIRouter(
     prefix=TRANSFERS_PREFIX,
@@ -17,113 +13,26 @@ router = APIRouter(
 
 @router.get("/")
 async def get_transfer_history(
-    session: SessionDep,
+    transfer_service: TransferServiceDep,
     current_user: CurrentUserDep,
 ):
-    Sender = aliased(User)
-    Receiver = aliased(User)
-
-    results = session.exec(
-        select(Transfer, Sender, Receiver)
-        .join(Sender, Transfer.sender_id == Sender.id)
-        .join(Receiver, Transfer.receiver_id == Receiver.id)
-        .where(
-            (Transfer.sender_id == current_user.id)
-            | (Transfer.receiver_id == current_user.id)
-        )
-    ).all()
-
-    response = [
-        TransferResponseModel(
-            id=transfer.id,
-            sender_username=sender.username,
-            receiver_username=receiver.username,
-            balance=transfer.balance,
-            transfer_date=transfer.transfer_date,
-            transfer_type=transfer.transfer_type,
-        )
-        for transfer, sender, receiver in results
-    ]
-
-    return response
+    return transfer_service.get_transfer_history(current_user.id)
 
 
 @router.post("/")
 async def make_transfer(
     transfer: TransferCreate,
-    session: SessionDep,
+    transfer_service: TransferServiceDep,
     current_user: CurrentUserDep,
 ):
-    sender_account = session.exec(
-        select(BankAccount).where(
-            BankAccount.user_id == current_user.id,
-            BankAccount.alias == transfer.sender_alias,
-        )
-    ).first()
-
-    receiver_account = session.exec(
-        select(BankAccount).where(BankAccount.alias == transfer.receiver_alias)
-    ).first()
-
-    if not sender_account:
-        raise HTTPException(status_code=404, detail="Sender account not found")
-
-    if not receiver_account:
-        raise HTTPException(status_code=404, detail="Receiver account not found")
-
-    if sender_account.balance < transfer.balance:
-        raise HTTPException(status_code=400, detail="Insufficient funds")
-
-    if transfer.balance <= 0:
-        raise HTTPException(status_code=400, detail="Transfer amount must be positive")
-
-    if sender_account.alias == receiver_account.alias:
-        raise HTTPException(status_code=400, detail="Cannot transfer to self")
-
-    sender_account.balance -= transfer.balance
-    receiver_account.balance += transfer.balance
-
-    transfer = Transfer(
-        sender_id=current_user.id,
-        receiver_id=receiver_account.user_id,
-        balance=transfer.balance,
-    )
-
-    session.add(transfer)
-    session.add(sender_account)
-    session.add(receiver_account)
-    session.commit()
-    session.refresh(transfer)
-    session.refresh(sender_account)
-    session.refresh(receiver_account)
-
-    return {
-        "id": transfer.id,
-        "sender": sender_account,
-        "receiver": receiver_account,
-        "balance": transfer.balance,
-        "transfer_date": transfer.transfer_date,
-        "transfer_type": transfer.transfer_type,
-    }
+    return transfer_service.make_transfer(current_user.id, transfer)
 
 
 @router.delete("/{transfer_id}")
 async def delete_transfer(
     transfer_id: int,
-    session: SessionDep,
+    transfer_service: TransferServiceDep,
     current_user: CurrentUserDep,
 ):
-    transfer = session.exec(
-        select(Transfer).where(
-            Transfer.id == transfer_id,
-            Transfer.sender_id == current_user.id,
-        )
-    ).first()
-
-    if not transfer:
-        raise HTTPException(status_code=404, detail="Transfer not found")
-
-    session.delete(transfer)
-    session.commit()
-
-    return {"detail": "Transfer deleted successfully", "deleted_transfer": transfer}
+    deleted_transfer = transfer_service.delete_transfer(transfer_id, current_user.id)
+    return {"detail": "Transfer deleted successfully", "deleted_transfer": deleted_transfer}

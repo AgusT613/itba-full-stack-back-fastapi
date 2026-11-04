@@ -1,11 +1,7 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-from sqlmodel import select
-from src.db.connection import SessionDep
-from src.utils.auth_user import get_current_user, CurrentUserDep
-from src.models.accounts import BankAccount
-from src.models.transfers import Transfer
-from src.models.users import User
+from fastapi import APIRouter, Depends, status
 from src.models.deposit import DepositCreate
+from src.services.transfer_service import TransferServiceDep
+from src.utils.auth_user import CurrentUserDep, get_current_user
 
 router = APIRouter(
     prefix="/deposit", dependencies=[Depends(get_current_user)], tags=["deposit"]
@@ -15,33 +11,8 @@ router = APIRouter(
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_deposit(
     deposit: DepositCreate,
-    session: SessionDep,
+    transfer_service: TransferServiceDep,
     current_user: CurrentUserDep,
 ):
-    account = session.exec(
-        select(BankAccount).where(
-            User.id == current_user.id, BankAccount.alias == deposit.alias
-        )
-    ).first()
-
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
-        )
-
-    account.balance += deposit.amount
-
-    transfer = Transfer(
-        balance=deposit.amount,
-        sender_id=account.id,
-        receiver_id=account.id,
-        transfer_type="deposit",
-    )
-
-    session.add(account)
-    session.add(transfer)
-    session.commit()
-    session.refresh(account)
-    session.refresh(transfer)
-
+    account = transfer_service.deposit_funds(current_user.id, deposit)
     return {"message": "Deposit successful", "account": account}

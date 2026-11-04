@@ -1,9 +1,6 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-from src.db.connection import SessionDep
-from src.utils.auth_user import get_current_user, CurrentUserDep
-from src.models.user_saved_aliases import UserSavedAlias, UserSavedAliasResponseModel
-from src.models.accounts import BankAccount
-from sqlmodel import select
+from fastapi import APIRouter, Depends
+from src.services.alias_service import AliasServiceDep
+from src.utils.auth_user import CurrentUserDep, get_current_user
 
 router = APIRouter(
     prefix="/alias", dependencies=[Depends(get_current_user)], tags=["alias"]
@@ -11,82 +8,24 @@ router = APIRouter(
 
 
 @router.get("/all")
-async def get_aliases(current_user: CurrentUserDep, session: SessionDep):
-    accounts = session.exec(
-        select(BankAccount).where(BankAccount.user_id == current_user.id)
-    ).all()
-
-    if not accounts:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No accounts found"
-        )
-
-    aliases = [{"alias": account.alias} for account in accounts]
-
-    return aliases
+async def get_aliases(current_user: CurrentUserDep, alias_service: AliasServiceDep):
+    return alias_service.get_all_account_aliases(current_user.id)
 
 
 @router.get("/itbank")
-async def get_itbank_alias(current_user: CurrentUserDep, session: SessionDep):
-    account = session.exec(
-        select(BankAccount).where(
-            BankAccount.user_id == current_user.id, BankAccount.account_type == "itbank"
-        )
-    ).first()
-
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="ITBANK account not found"
-        )
-
-    return {"alias": account.alias}
+async def get_itbank_alias(current_user: CurrentUserDep, alias_service: AliasServiceDep):
+    return alias_service.get_itbank_alias(current_user.id)
 
 
 @router.get("/save")
-async def get_saved_aliases(current_user: CurrentUserDep, session: SessionDep):
-    aliases = session.exec(
-        select(UserSavedAlias).where(UserSavedAlias.user_id == current_user.id)
-    ).all()
-
-    if not aliases:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No saved aliases found"
-        )
-
-    response = [
-        UserSavedAliasResponseModel(id=alias.id, alias=alias.alias) for alias in aliases
-    ]
-
-    return response
+async def get_saved_aliases(current_user: CurrentUserDep, alias_service: AliasServiceDep):
+    return alias_service.get_saved_aliases(current_user.id)
 
 
 @router.post("/save/{alias}")
 async def save_alias(
     alias: str,
     current_user: CurrentUserDep,
-    session: SessionDep,
+    alias_service: AliasServiceDep,
 ):
-    account = session.exec(
-        select(BankAccount).where(BankAccount.alias == alias)
-    ).first()
-
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account with alias not found"
-        )
-
-    alias = session.exec(
-        select(UserSavedAlias).where(UserSavedAlias.alias == alias)
-    ).first()
-
-    if alias:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Alias already saved"
-        )
-
-    new_alias = UserSavedAlias(user_id=current_user.id, alias=account.alias)
-    session.add(new_alias)
-    session.commit()
-    session.refresh(new_alias)
-
-    return UserSavedAliasResponseModel(id=new_alias.id, alias=new_alias.alias)
+    return alias_service.save_alias(current_user.id, alias)

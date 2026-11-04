@@ -1,16 +1,12 @@
+from fastapi import APIRouter, Depends
 from src.constants.constants import ACCOUNTS_PREFIX
-from src.db.connection import SessionDep
-from src.utils.text_generation import get_bank_alias
 from src.models.accounts import (
-    BankAccount,
     BankAccountCreate,
     BankAccountPartialUpdate,
     BankAccountFullUpdate,
 )
-from fastapi import Depends, HTTPException, APIRouter, status
-from src.utils.auth_user import get_current_user
-from sqlmodel import select
-from src.utils.auth_user import CurrentUserDep
+from src.services.account_service import AccountServiceDep
+from src.utils.auth_user import CurrentUserDep, get_current_user
 
 router = APIRouter(
     prefix=ACCOUNTS_PREFIX, dependencies=[Depends(get_current_user)], tags=["accounts"]
@@ -19,161 +15,77 @@ router = APIRouter(
 
 @router.get("/")
 async def get_my_accounts(
-    session: SessionDep,
+    account_service: AccountServiceDep,
     current_user: CurrentUserDep,
 ):
-    accounts = session.exec(
-        select(BankAccount).where(BankAccount.user_id == current_user.id)
-    ).all()
-
-    return accounts
+    return account_service.get_user_accounts(current_user.id)
 
 
 @router.get("/by/")
 async def get_one_account(
-    session: SessionDep,
+    account_service: AccountServiceDep,
     current_user: CurrentUserDep,
     acc_number: str | None = None,
     acc_id: int | None = None,
     acc_alias: str | None = None,
 ):
-    account = session.exec(
-        select(BankAccount).where(
-            (BankAccount.account_number == acc_number)
-            | (BankAccount.id == acc_id)
-            | (BankAccount.alias == acc_alias),
-            BankAccount.user_id == current_user.id,
-        )
-    ).first()
-
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
-        )
-
-    return account
+    return account_service.get_account_by_identifier(
+        user_id=current_user.id,
+        acc_number=acc_number,
+        acc_id=acc_id,
+        acc_alias=acc_alias,
+    )
 
 
 @router.post("/")
 async def create_account_for_user(
     bank_account: BankAccountCreate,
-    session: SessionDep,
+    account_service: AccountServiceDep,
     current_user: CurrentUserDep,
 ):
-    new_account = BankAccount(
-        account_number=bank_account.account_number,
-        account_type=bank_account.account_type,
-        balance=bank_account.balance,
-        description=bank_account.description,
-        alias=get_bank_alias(current_user.username),
+    return account_service.create_account(
         user_id=current_user.id,
+        username=current_user.username,
+        bank_account=bank_account,
     )
-
-    session.add(new_account)
-    session.commit()
-    session.refresh(new_account)
-
-    return new_account
 
 
 @router.patch("/")
 async def update_account_partially(
     bank_account: BankAccountPartialUpdate,
-    session: SessionDep,
+    account_service: AccountServiceDep,
     current_user: CurrentUserDep,
 ):
-    account = session.exec(
-        select(BankAccount).where(
-            BankAccount.account_number == bank_account.account_number,
-            BankAccount.user_id == current_user.id,
-        )
-    ).first()
-
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
-        )
-
-    account.account_type = bank_account.account_type or account.account_type
-    account.balance = bank_account.balance or account.balance
-    account.description = bank_account.description or account.description
-    account.alias = bank_account.alias or account.alias
-
-    session.add(account)
-    session.commit()
-    session.refresh(account)
-
-    return account
+    return account_service.update_account_partially(
+        user_id=current_user.id,
+        bank_account=bank_account,
+    )
 
 
 @router.put("/")
 async def update_account_fully(
     bank_account: BankAccountFullUpdate,
-    session: SessionDep,
+    account_service: AccountServiceDep,
     current_user: CurrentUserDep,
 ):
-    account = session.exec(
-        select(BankAccount).where(
-            BankAccount.account_number == bank_account.account_number,
-            BankAccount.user_id == current_user.id,
-        )
-    ).first()
-
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
-        )
-
-    account.account_type = bank_account.account_type
-    account.balance = bank_account.balance
-    account.description = bank_account.description
-    account.alias = bank_account.alias
-
-    session.add(account)
-    session.commit()
-    session.refresh(account)
-
-    return account
+    return account_service.update_account_fully(
+        user_id=current_user.id,
+        bank_account=bank_account,
+    )
 
 
 @router.delete("/")
 async def delete_account(
-    session: SessionDep,
+    account_service: AccountServiceDep,
     current_user: CurrentUserDep,
     acc_number: str | None = None,
     acc_id: int | None = None,
     acc_alias: str | None = None,
 ):
-
-    if acc_id:
-        statement = select(BankAccount).where(
-            BankAccount.id == acc_id,
-            BankAccount.user_id == current_user.id,
-        )
-    elif acc_number:
-        statement = select(BankAccount).where(
-            BankAccount.account_number == acc_number,
-            BankAccount.user_id == current_user.id,
-        )
-    elif acc_alias:
-        statement = select(BankAccount).where(
-            BankAccount.alias == acc_alias,
-            BankAccount.user_id == current_user.id,
-        )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either account_id, account_number or account_alias must be provided",
-        )
-
-    account = session.exec(statement).first()
-
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
-        )
-
-    session.delete(account)
-    session.commit()
-
-    return {"detail": "Account deleted successfully", "account_deleted": account}
+    deleted_account = account_service.delete_account(
+        user_id=current_user.id,
+        acc_number=acc_number,
+        acc_id=acc_id,
+        acc_alias=acc_alias,
+    )
+    return {"detail": "Account deleted successfully", "account_deleted": deleted_account}

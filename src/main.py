@@ -6,6 +6,7 @@ from src.routers.routers import api_router
 from fastapi.middleware.cors import CORSMiddleware
 from src.constants.constants import HOMEBANKING_FRONTEND_URL
 from dotenv import load_dotenv
+from src.handlers import register_exception_handlers
 
 if not load_dotenv():
     print("No dotenv file could be set")
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
 origins = [HOMEBANKING_FRONTEND_URL]
 
 app = FastAPI(lifespan=lifespan)
+register_exception_handlers(app)
 app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,

@@ -1,52 +1,26 @@
-from fastapi import APIRouter, HTTPException, status
 from typing import Annotated
-from fastapi import Depends
-from src.utils.text_generation import generate_account_number
-from src.models.users import User
-from src.models.accounts import BankAccount
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from src.db.connection import SessionDep
-from datetime import timedelta
 from src.constants.constants import (
-    ALREADY_REGISTERED_USER,
     AUTH_POST_REGISTER,
     AUTH_POST_TOKEN,
     AUTH_PREFIX,
-    INCORRECT_USERNAME_OR_PASSWORD,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-)
-from src.utils.auth_user import (
-    authenticate_user,
-    create_access_token,
 )
 from src.models.auth import RegisterResponse, Token
 from src.models.users import UserRegister
-from src.utils.text_generation import get_bank_alias
-from src.utils.password import get_password_hash
-from src.db.user import get_user
+from src.services.auth_service import AuthServiceDep
 
 router = APIRouter(prefix=AUTH_PREFIX, tags=["auth"])
 
 
 @router.post(AUTH_POST_TOKEN, response_model=Token)
 async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    auth_service: AuthServiceDep,
 ):
-    user = authenticate_user(session, form_data.username, form_data.password)
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=INCORRECT_USERNAME_OR_PASSWORD,
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+    return auth_service.authenticate_and_create_token(
+        form_data.username, form_data.password
     )
-
-    return Token(access_token=access_token, token_type="bearer")
 
 
 @router.post(
@@ -56,40 +30,6 @@ async def login_for_access_token(
 )
 async def register(
     user: UserRegister,
-    session: SessionDep,
+    auth_service: AuthServiceDep,
 ):
-    user_found = get_user(session, username=user.username)
-
-    if user_found:
-        raise HTTPException(status_code=400, detail=ALREADY_REGISTERED_USER)
-
-    hashed_password = get_password_hash(user.password)
-    new_user = User(
-        username=user.username,
-        email=user.email,
-        full_name=user.full_name,
-        hashed_password=hashed_password,
-        disabled=False,
-    )
-
-    session.add(new_user)
-    session.flush()
-
-    new_account = BankAccount(
-        description="ITBANK account",
-        account_number=generate_account_number(),
-        account_type="itbank",
-        balance=0.0,
-        user_id=new_user.id,
-        alias=get_bank_alias(user.username),
-    )
-
-    session.add(new_account),
-    session.commit()
-    session.refresh(new_user)
-    session.refresh(new_account)
-
-    return {
-        **new_user.model_dump(),
-        **new_account.model_dump(),
-    }
+    return auth_service.register_user(user)

@@ -1,9 +1,7 @@
-from sqlmodel import select
-from fastapi import APIRouter, Depends, HTTPException, status
-from src.utils.auth_user import get_current_user, CurrentUserDep
-from src.db.connection import SessionDep
-from src.models.accounts import BankAccount
-from src.models.loans import Loan, LoanCreate, LoanFullUpdate, LoanPartialUpdate
+from fastapi import APIRouter, Depends, status
+from src.models.loans import LoanCreate, LoanFullUpdate, LoanPartialUpdate
+from src.services.loan_service import LoanServiceDep
+from src.utils.auth_user import CurrentUserDep, get_current_user
 
 router = APIRouter(
     prefix="/loans", dependencies=[Depends(get_current_user)], tags=["loans"]
@@ -11,155 +9,53 @@ router = APIRouter(
 
 
 @router.get("/")
-async def get_loan_list(session: SessionDep, current_user: CurrentUserDep):
-    loans = session.exec(select(Loan).where(Loan.user_id == current_user.id)).all()
-
-    return loans
+async def get_loan_list(loan_service: LoanServiceDep, current_user: CurrentUserDep):
+    return loan_service.get_loans(current_user.id)
 
 
 @router.get("/{loan_id}")
 async def get_loan_by_id(
     loan_id: int,
-    session: SessionDep,
+    loan_service: LoanServiceDep,
     current_user: CurrentUserDep,
 ):
-    loan = session.exec(
-        select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)
-    ).first()
-
-    if not loan:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No loan found with id {loan_id}",
-        )
-
-    return loan
+    return loan_service.get_loan_by_id(loan_id, current_user.id)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def request_loan(
     loan: LoanCreate,
-    session: SessionDep,
+    loan_service: LoanServiceDep,
     current_user: CurrentUserDep,
 ):
-    user_account = session.exec(
-        select(BankAccount).where(
-            BankAccount.id == loan.user_account_id,
-            BankAccount.user_id == current_user.id,
-        )
-    ).first()
-
-    if not user_account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
-        )
-
-    total_to_pay = loan.amount * loan.interest_rate
-    new_loan = Loan(
-        user_id=current_user.id,
-        total_repayment=total_to_pay,
-        amount=loan.amount,
-        branch_office_id=loan.branch_office_id,
-        due_date=loan.due_date,
-        interest_rate=loan.interest_rate,
-        loan_type=loan.loan_type,
-        total_installments=loan.total_installments,
-        remaining_installments=loan.total_installments,
-        user_account_id=loan.user_account_id,
-        status="active",
-    )
-
-    user_account.balance += loan.amount
-
-    session.add(new_loan)
-    session.add(user_account)
-    session.commit()
-    session.refresh(new_loan)
-    session.refresh(user_account)
-
-    return {"account": user_account, "loan": new_loan}
+    return loan_service.request_loan(current_user.id, loan)
 
 
 @router.patch("/{loan_id}")
 async def partial_update_loan(
     loan_id: int,
-    session: SessionDep,
-    current_user: CurrentUserDep,
     updated_loan_data: LoanPartialUpdate,
+    loan_service: LoanServiceDep,
+    current_user: CurrentUserDep,
 ):
-    loan = session.exec(
-        select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)
-    ).first()
-
-    if not loan:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No loan found with id {loan_id}",
-        )
-
-    for key, value in updated_loan_data.model_dump(exclude_unset=True).items():
-        setattr(loan, key, value)
-
-    session.add(loan)
-    session.commit()
-    session.refresh(loan)
-
-    return loan
+    return loan_service.update_loan_partially(loan_id, current_user.id, updated_loan_data)
 
 
 @router.put("/{loan_id}")
 async def full_update_loan(
     loan_id: int,
-    session: SessionDep,
-    current_user: CurrentUserDep,
     updated_loan_data: LoanFullUpdate,
+    loan_service: LoanServiceDep,
+    current_user: CurrentUserDep,
 ):
-    loan = session.exec(
-        select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)
-    ).first()
-
-    if not loan:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No loan found with id {loan_id}",
-        )
-
-    for key, value in updated_loan_data.model_dump().items():
-        setattr(loan, key, value)
-
-    session.add(loan)
-    session.commit()
-    session.refresh(loan)
-
-    return loan
+    return loan_service.update_loan_fully(loan_id, current_user.id, updated_loan_data)
 
 
 @router.delete("/{loan_id}")
 async def delete_loan(
     loan_id: int,
-    session: SessionDep,
+    loan_service: LoanServiceDep,
     current_user: CurrentUserDep,
 ):
-    loan = session.exec(
-        select(Loan).where(Loan.id == loan_id, Loan.user_id == current_user.id)
-    ).first()
-
-    if not loan:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No loan found with id {loan_id}",
-        )
-
-    account = session.exec(
-        select(BankAccount).where(
-            BankAccount.id == loan.user_account_id,
-            BankAccount.user_id == current_user.id,
-        )
-    ).first()
-
-    account.balance -= loan.amount
-
-    session.delete(loan)
-    session.commit()
-
-    return {"detail": f"Loan with id {loan_id} has been deleted", "deleted_loan": loan}
+    deleted_loan = loan_service.delete_loan(loan_id, current_user.id)
+    return {"detail": f"Loan with id {loan_id} has been deleted", "deleted_loan": deleted_loan}
