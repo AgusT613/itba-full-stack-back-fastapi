@@ -131,7 +131,6 @@ itba_full_stack_back_fastapi/
 │   │   └── constants.py        # Route prefixes, table names, JWT parameters, error messages
 │   ├── db/                     # DB engine & session
 │   │   ├── connection.py       # Engine creation, SessionDep, create_db_and_tables
-│   │   └── user.py             # User lookup query helper
 │   ├── exceptions/             # Pure domain exception definitions
 │   │   ├── __init__.py
 │   │   └── banking_exceptions.py # BankingException, EntityNotFoundError, InsufficientFundsError, etc.
@@ -187,7 +186,7 @@ itba_full_stack_back_fastapi/
 │   │               ├── loans/loans.py       # Injects LoanServiceDep
 │   │               └── transfers/transfers.py # Injects TransferServiceDep
 │   └── utils/                  # Domain utilities, security, and dependency providers
-│       ├── auth_user.py        # Token issuance, get_current_user, CurrentUserDep
+│       ├── auth_user.py        # Token issuance, get_user, get_current_user, CurrentUserDep
 │       ├── password.py         # Argon2 password hashing and verification
 │       └── text_generation.py  # Alias generator, account number generator, FakerDep
 └── tests/                      # Automated test suite (Pytest + Starlette TestClient)

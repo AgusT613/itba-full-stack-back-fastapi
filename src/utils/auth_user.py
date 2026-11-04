@@ -14,10 +14,14 @@ from src.constants.constants import (
     TOKEN_URL,
 )
 from src.models.auth import TokenData
-from src.db.user import get_user
 from .password import verify_password
+from src.repositories.user_repository import UserRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=TOKEN_URL)
+
+
+def get_user(session: SessionDep, username: str) -> User | None:
+    return UserRepository(session).get_by_username(username)
 
 
 def authenticate_user(session: SessionDep, username: str, password: str):
