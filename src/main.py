@@ -5,11 +5,7 @@ from contextlib import asynccontextmanager
 from src.routers.routers import api_router
 from fastapi.middleware.cors import CORSMiddleware
 from src.constants.constants import HOMEBANKING_FRONTEND_URL
-from dotenv import load_dotenv
 from src.handlers import register_exception_handlers
-
-if not load_dotenv():
-    print("No dotenv file could be set")
 
 
 @asynccontextmanager

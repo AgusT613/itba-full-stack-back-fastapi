@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # SQLITE
 SQLITE_FILE_NAME = "src/database.db"
