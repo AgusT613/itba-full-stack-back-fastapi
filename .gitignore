@@ -1,5 +1,6 @@
 __pycache__/
-database.db
+*.db
+src/*.db
 .env*
 !.env.example
 .vscode/

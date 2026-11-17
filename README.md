@@ -160,8 +160,10 @@ itba_full_stack_back_fastapi/
 │   ├── main.py                 # FastAPI application, lifespan, CORS, and exception handler setup
 │   ├── constants/
 │   │   └── constants.py        # Route prefixes, table names, JWT constants, and error messages
-│   ├── db/                     # DB engine & session
-│   │   └── connection.py       # Engine creation, SessionDep, create_db_and_tables
+│   ├── db/                     # DB engine, session & seeding
+│   │   ├── connection.py       # Engine creation, SessionDep, create/drop/cleanup tables
+│   │   └── seed.py             # Development database seeder with Faker integration
+
 │   ├── exceptions/             # Pure domain exception definitions
 │   │   ├── __init__.py
 │   │   └── banking_exceptions.py # BankingException, EntityNotFoundError, InsufficientFundsError, etc.
@@ -248,15 +250,56 @@ itba_full_stack_back_fastapi/
 
 ### Environment Variables
 
-Create a `.env` file in the root directory based on the following template:
+Create a `.env` file in the root directory based on the following template (or copy `.env.example`):
 
 ```env
+# Environment Mode: 'development' | 'production' | 'test'
+ENVIRONMENT="development"
+
+# Database Connection (Optional - defaults to SQLite database_<env>.db)
+# SQLite (default):
+# DATABASE_URL="sqlite:///src/database_dev.db"
+# PostgreSQL (production ready via psycopg):
+# DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/itbank"
+
+# JWT Authentication
 AUTH_SECRET_KEY="your-jwt-secret-key-at-least-32-characters"
 ALGORITHM="HS256"
+
+# Frontend CORS Origin
 ITBANK_HOMEBANKING_FRONTEND_URL="http://localhost:3000"
 ```
 
-> **Note:** A `.env.test` file is already included in the repository with test-specific secrets and is loaded automatically by `pytest-dotenv`.
+> **Note:** A `.env.test` file is already included in the repository with test-specific secrets and `ENVIRONMENT="test"`, loaded automatically by `pytest-dotenv`.
+
+### Database Lifecycle & Environments
+
+The application dynamically manages the database lifecycle based on `ENVIRONMENT`:
+
+| Mode | Database | Seeding | Shutdown Behavior |
+| :--- | :--- | :--- | :--- |
+| **Development** (`development`) | SQLite (`database_dev.db`) or custom `DATABASE_URL` | Automatically populated on startup with 3 test users via `Faker` (idempotent) | Preserved for continued development |
+| **Production** (`production`) | SQLite (`database_prod.db`) or PostgreSQL (`postgresql+psycopg://...`) | Clean database (no mock seed data) | Automatically cleans up/deletes the database file or drops tables on shutdown |
+| **Testing** (`test`) | In-memory SQLite (`sqlite://` with `StaticPool`) | Controlled per-test fixtures in `tests/conftest.py` | Disposed after test session |
+
+---
+
+## 👥 Pre-Seeded Test Users (Development Mode)
+
+When starting the development server (`ENVIRONMENT="development"`), the database is automatically seeded with 3 distinct user profiles using **Faker** for realistic Argentinian addresses, phone numbers, card details, and transfer amounts:
+
+| User Type | Username | Password | Email | Profile Description | Included Mock Data |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `admin` | `admin@itbank.com` | Rich profile to showcase a fully populated UI | • **2 Accounts:** Primary Checking (`admin.itbank.main`, ~$2.8M balance) + Savings VIP (`admin.savings.vip`, ~$920k balance)<br>• **4 Cards:** Visa Debit, Mastercard Black, Amex Platinum, blocked Visa Gold<br>• **2 Active Loans:** Personal loan ($600k) & Car loan ($1.8M)<br>• **Saved Aliases:** `user.itbank.main`, plus company aliases<br>• **Transfers & Deposits:** Multiple outgoing transfers, incoming transfers, and bank deposits |
+| **Standard User** | `user` | `user` | `user@itbank.com` | Counterpart receiver for peer-to-peer transfers | • **1 Account:** Primary Checking (`user.itbank.main`, ~$85k balance)<br>• **1 Card:** Visa Debit (active)<br>• **Saved Alias:** `admin.itbank.main`<br>• **Transfers:** Received transfers from `admin` and sent a transfer back |
+| **Empty State** | `empty` | `empty` | `empty@itbank.com` | Zero-state profile representing a brand new registration | • **1 Account:** Primary Checking (`empty.itbank.main`, $0.00 balance)<br>• **0 Cards**, **0 Loans**, **0 Transfers**, **0 Saved Aliases** |
+
+> 💡 **Manual Seeding:** You can also manually trigger seeding at any time via:
+> ```bash
+> poetry run python -m src.db.seed
+> ```
+
+---
 
 ### Running the Server
 

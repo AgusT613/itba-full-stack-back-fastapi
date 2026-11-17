@@ -3,9 +3,31 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# SQLITE
-SQLITE_FILE_NAME = "src/database.db"
-SQLITE_URL = f"sqlite:///{SQLITE_FILE_NAME}"
+# ENVIRONMENT
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+
+# DATABASE CONFIGURATION
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    if ENVIRONMENT in ("development", "dev"):
+        SQLITE_FILE_NAME = "src/database_dev.db"
+    elif ENVIRONMENT in ("production", "prod"):
+        SQLITE_FILE_NAME = "src/database_prod.db"
+    elif ENVIRONMENT in ("test", "testing"):
+        SQLITE_FILE_NAME = "src/database_test.db"
+    else:
+        SQLITE_FILE_NAME = "src/database_dev.db"
+    DATABASE_URL = f"sqlite:///{SQLITE_FILE_NAME}"
+else:
+    # Normalize postgres URL dialects for SQLAlchemy with psycopg3
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+    elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+    SQLITE_FILE_NAME = "src/database.db"
+
+SQLITE_URL = DATABASE_URL
 
 # TABLE NAMES
 BRANCH_OFFICES = "branch_offices"

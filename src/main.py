@@ -1,17 +1,23 @@
+from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
-from src.db.connection import create_db_and_tables
-from contextlib import asynccontextmanager
-from src.routers.routers import api_router
 from fastapi.middleware.cors import CORSMiddleware
-from src.constants.constants import HOMEBANKING_FRONTEND_URL
+from src.constants.constants import ENVIRONMENT, HOMEBANKING_FRONTEND_URL
+from src.db.connection import cleanup_prod_database, create_db_and_tables
+from src.db.seed import seed_dev_database
 from src.handlers import register_exception_handlers
+from src.routers.routers import api_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
+    if ENVIRONMENT in ("development", "dev"):
+        seed_dev_database()
     yield
+    if ENVIRONMENT in ("production", "prod"):
+        cleanup_prod_database()
+
 
 
 origins = [HOMEBANKING_FRONTEND_URL]

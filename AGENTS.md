@@ -30,7 +30,7 @@ This repository implements the backend REST API for **ITBANK**, a fictitious hom
 | **Web Framework** | FastAPI (standard) | `^0.116.1` | Async REST API routing, OpenAPI docs, and DI |
 | **Server Engine** | Uvicorn | Integrated | ASGI server |
 | **ORM / Data Layer** | SQLModel | `^0.0.24` | Hybrid Pydantic v2 + SQLAlchemy 2.0 ORM |
-| **Database** | SQLite | File (`src/database.db`) / In-Memory (`sqlite://`) for tests | Persistence layer |
+| **Database Drivers**| SQLite / psycopg3 | SQLite (built-in) / `psycopg[binary] ^3.3.9` | Persistence layer (SQLite dev/prod & PostgreSQL ready) |
 | **Authentication** | PyJWT | `^2.10.1` | JSON Web Token encoding, decoding, and validation |
 | **Password Security** | pwdlib[argon2] | `^0.3.0` | Password and PIN hashing via Argon2id |
 | **Configuration** | python-dotenv / pytest-dotenv | `^1.2.1` / `^0.5.2` | `.env` variable loading for dev and tests |
@@ -129,8 +129,9 @@ itba_full_stack_back_fastapi/
 │   ├── main.py                 # FastAPI app, lifespan, CORS, exception handlers registration
 │   ├── constants/
 │   │   └── constants.py        # Route prefixes, table names, JWT parameters, error messages
-│   ├── db/                     # DB engine & session
-│   │   ├── connection.py       # Engine creation, SessionDep, create_db_and_tables
+│   ├── db/                     # DB engine, session & seeding
+│   │   ├── connection.py       # Engine creation, SessionDep, create/drop/cleanup tables
+│   │   └── seed.py             # Development database seeder with Faker integration
 │   ├── exceptions/             # Pure domain exception definitions
 │   │   ├── __init__.py
 │   │   └── banking_exceptions.py # BankingException, EntityNotFoundError, InsufficientFundsError, etc.
@@ -295,7 +296,7 @@ erDiagram
 
 ## 6. Developer & Agent Workflow
 
-### 6.1 Environment Setup
+### 6.1 Environment Setup & Database Modes
 
 1. **Install Poetry:** Ensure Poetry `>= 2.0.0` is available.
 2. **Install Dependencies:**
@@ -305,10 +306,38 @@ erDiagram
 3. **Configure Environment Variables:**
    Create `.env` based on the following keys:
    ```env
+   # Environment Mode (development | production | test)
+   ENVIRONMENT="development"
+
+   # Database Connection (Optional - defaults to SQLite database_<env>.db)
+   # SQLite:
+   # DATABASE_URL="sqlite:///src/database_dev.db"
+   # PostgreSQL (production ready via psycopg):
+   # DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/itbank"
+
    AUTH_SECRET_KEY="your-jwt-secret-key-32-chars-minimum"
    ALGORITHM="HS256"
    ITBANK_HOMEBANKING_FRONTEND_URL="http://localhost:3000"
    ```
+
+### 6.2 Database Lifecycle & Pre-Seeded Test Users
+
+#### Multi-Environment Lifecycle:
+- **Development (`ENVIRONMENT="development"`):** Uses `src/database_dev.db` (or custom `DATABASE_URL`). On startup, automatically runs `seed_dev_database()` using **Faker** to populate realistic Argentine addresses, phone numbers, transaction amounts, and cards.
+- **Production (`ENVIRONMENT="production"`):** Uses `src/database_prod.db` (or PostgreSQL if `DATABASE_URL` is configured). Creates empty tables on startup; on lifespan shutdown, `cleanup_prod_database()` automatically removes the SQLite database file or drops all tables to ensure no transient data lingers.
+- **Testing (`ENVIRONMENT="test"`):** Uses an in-memory SQLite database (`sqlite://` with `StaticPool`). Seed script is bypassed; test fixtures in `tests/conftest.py` manage isolated per-test state.
+
+#### Development Test Accounts:
+| User Type | Username | Password | Purpose & Included Data |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `admin` | Full UI display profile: 2 bank accounts (Checking ~$2.8M, Savings VIP ~$920k), 4 cards (Visa Debit, Mastercard Black, Amex Platinum, blocked Visa Gold), 2 active loans (personal, car), saved aliases, transfer and deposit history. |
+| **Standard User** | `user` | `user` | Counterpart receiver: 1 checking account (~$85k), 1 active debit card, saved alias `admin.itbank.main`, received & sent transfers. |
+| **Empty User** | `empty` | `empty` | Brand-new zero state: 1 checking account ($0.00 balance), 0 cards, 0 loans, 0 transfers, 0 saved aliases. |
+
+Manual seeding can be executed via:
+```bash
+poetry run python -m src.db.seed
+```
 
 ### 6.2 Running the Application
 
