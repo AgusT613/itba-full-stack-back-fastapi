@@ -257,11 +257,8 @@ Create a `.env` file in the root directory based on the following template (or c
 # Environment Mode: 'development' | 'production' | 'test'
 ENVIRONMENT="development"
 
-# Database Connection (Optional - defaults to SQLite database_<env>.db)
-# SQLite (default):
-# DATABASE_URL="sqlite:///src/database_dev.db"
-# PostgreSQL (production ready via psycopg):
-# DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/itbank"
+# Database Connection (SQLite, PostgreSQL via psycopg, etc.)
+DATABASE_URL="your-sql-database-url-sqlite-postgresql-or-any"
 
 # Opt-in database teardown on shutdown (Default: false)
 # PURGE_DATABASE_ON_SHUTDOWN="false"
