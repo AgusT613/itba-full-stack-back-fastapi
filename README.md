@@ -162,6 +162,7 @@ itba_full_stack_back_fastapi/
 │   │   └── constants.py        # Route prefixes, table names, JWT constants, and error messages
 │   ├── db/                     # DB engine, session & seeding
 │   │   ├── connection.py       # Engine creation, SessionDep, create/drop/cleanup tables
+│   │   ├── init_db.py          # Production database initializer & admin bootstrapper
 │   │   └── seed.py             # Development database seeder with Faker integration
 
 │   ├── exceptions/             # Pure domain exception definitions
@@ -279,8 +280,14 @@ The application dynamically manages the database lifecycle based on `ENVIRONMENT
 | Mode | Database | Seeding | Shutdown Behavior |
 | :--- | :--- | :--- | :--- |
 | **Development** (`development`) | SQLite (`database_dev.db`) or custom `DATABASE_URL` | Automatically populated on startup with 3 test users via `Faker` (idempotent) | Preserved for continued development |
-| **Production** (`production`) | SQLite (`database_prod.db`) or PostgreSQL (`postgresql+psycopg://...`) | Clean database (no mock seed data) | Automatically cleans up/deletes the database file or drops tables on shutdown |
+| **Production** (`production`) | SQLite (`database_prod.db`) or PostgreSQL (`postgresql+psycopg://...`) | Clean database (mock test data is skipped). Initialize via `src.db.init_db` | Preserved across container restarts (connection pool disposed). Purging is opt-in via `PURGE_DATABASE_ON_SHUTDOWN=true` |
 | **Testing** (`test`) | In-memory SQLite (`sqlite://` with `StaticPool`) | Controlled per-test fixtures in `tests/conftest.py` | Disposed after test session |
+
+> 💡 **Production Initialization:** For production deployments, bootstrap the initial administrator account and default branch office via:
+> ```bash
+> poetry run python -m src.db.init_db
+> ```
+> Configurable via `INITIAL_ADMIN_USERNAME`, `INITIAL_ADMIN_PASSWORD`, and `INITIAL_ADMIN_EMAIL`.
 
 ---
 

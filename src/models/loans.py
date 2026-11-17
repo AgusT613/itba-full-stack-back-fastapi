@@ -9,7 +9,7 @@ class Loan(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     branch_office_id: int = Field(foreign_key="branch_offices.id")
     user_id: int = Field(foreign_key="users.id")
-    user_account_id: int = Field(foreign_key="bank_accounts.user_id")
+    user_account_id: int = Field(foreign_key="bank_accounts.id")
     loan_type: str
     start_date: datetime = Field(
         sa_column_kwargs={"server_default": func.now()}, nullable=False

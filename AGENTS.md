@@ -131,6 +131,7 @@ itba_full_stack_back_fastapi/
 │   │   └── constants.py        # Route prefixes, table names, JWT parameters, error messages
 │   ├── db/                     # DB engine, session & seeding
 │   │   ├── connection.py       # Engine creation, SessionDep, create/drop/cleanup tables
+│   │   ├── init_db.py          # Production database initializer & admin bootstrapper
 │   │   └── seed.py             # Development database seeder with Faker integration
 │   ├── exceptions/             # Pure domain exception definitions
 │   │   ├── __init__.py
@@ -324,7 +325,7 @@ erDiagram
 
 #### Multi-Environment Lifecycle:
 - **Development (`ENVIRONMENT="development"`):** Uses `src/database_dev.db` (or custom `DATABASE_URL`). On startup, automatically runs `seed_dev_database()` using **Faker** to populate realistic Argentine addresses, phone numbers, transaction amounts, and cards.
-- **Production (`ENVIRONMENT="production"`):** Uses `src/database_prod.db` (or PostgreSQL if `DATABASE_URL` is configured). Creates empty tables on startup; on lifespan shutdown, `cleanup_prod_database()` automatically removes the SQLite database file or drops all tables to ensure no transient data lingers.
+- **Production (`ENVIRONMENT="production"`):** Uses `src/database_prod.db` (or PostgreSQL if `DATABASE_URL` is configured). Creates empty tables on startup; on lifespan shutdown, `cleanup_prod_database()` disposes the engine connection pool. Data is preserved across container restarts/shutdowns. Table dropping is strictly opt-in via `PURGE_DATABASE_ON_SHUTDOWN="true"`. Bootstrap initial production admins via `poetry run python -m src.db.init_db`.
 - **Testing (`ENVIRONMENT="test"`):** Uses an in-memory SQLite database (`sqlite://` with `StaticPool`). Seed script is bypassed; test fixtures in `tests/conftest.py` manage isolated per-test state.
 
 #### Development Test Accounts:

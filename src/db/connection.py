@@ -23,18 +23,29 @@ def drop_db_and_tables():
 
 
 def cleanup_prod_database():
-    """Tear down and clean up production database when shutting down."""
-    if ENVIRONMENT in ("production", "prod"):
-        try:
-            engine.dispose()
+    """Dispose of engine connection pool on application shutdown.
+
+    Preserves persistent database data across container restarts and server redeployments.
+    Table dropping or SQLite file deletion is only performed if PURGE_DATABASE_ON_SHUTDOWN
+    is explicitly set to 'true' (e.g., ephemeral test environments or transient pipelines).
+    """
+    try:
+        purge_on_shutdown = (
+            os.getenv("PURGE_DATABASE_ON_SHUTDOWN", "false").lower() in ("true", "1")
+        )
+        if purge_on_shutdown:
             if DATABASE_URL.startswith("sqlite:///"):
                 db_path = DATABASE_URL.replace("sqlite:///", "")
+                engine.dispose()
                 if os.path.exists(db_path):
                     os.remove(db_path)
             else:
                 drop_db_and_tables()
-        except Exception as e:
-            print(f"Error during production database cleanup: {e}")
+                engine.dispose()
+        else:
+            engine.dispose()
+    except Exception as e:
+        print(f"Error during database shutdown cleanup: {e}")
 
 
 def get_session():
