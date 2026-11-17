@@ -6,11 +6,6 @@ from src.utils.text_generation import FakerDep
 router = APIRouter(prefix=ITBANK_PREFIX, tags=["branch-offices"])
 
 
-@router.head("/server-alive")
-async def is_server_alive():
-    return {"response": "ok"}
-
-
 @router.get(ITBANK_BRANCH_OFFICES)
 async def read_item(branch_service: BranchServiceDep):
     return branch_service.list_branch_offices()

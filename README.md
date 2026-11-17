@@ -64,9 +64,8 @@ The application follows a **3-Tier Layered Architecture** separating presentatio
   - Track total and remaining installment schedules.
 - **🏷️ Address Book (Saved Aliases):**
   - Save frequently used beneficiary aliases for quick access during transfers.
-- **🏢 Public Directory & Health Probe:**
+- **🏢 Public Directory:**
   - Public directory of physical branch offices.
-  - Lightweight `/server-alive` health check endpoint for monitoring.
 - **📈 Dashboard Aggregator:**
   - Composite endpoint (`GET /api/itbank/homebanking/`) aggregating user profile details, primary accounts, active cards, and recent transfer logs in a single request.
 
@@ -314,7 +313,6 @@ FastAPI automatically generates interactive OpenAPI documentation:
 | :--- | :--- | :--- | :---: |
 | **POST** | `/api/auth/register` | Register user & provision primary checking account | No |
 | **POST** | `/api/auth/token` | Obtain JWT access token via OAuth2 password flow | No |
-| **HEAD** | `/api/itbank/server-alive` | Lightweight health check | No |
 | **GET** | `/api/itbank/branch-offices` | List all branch offices | No |
 | **POST** | `/api/itbank/branch-offices` | Create a new branch office | No |
 | **DELETE** | `/api/itbank/branch-offices/{id}` | Delete a branch office | No |

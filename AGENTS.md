@@ -18,7 +18,7 @@ This repository implements the backend REST API for **ITBANK**, a fictitious hom
 - **Transfers & Deposits:** Funds transfer between accounts via aliases, transaction history, and balance deposits.
 - **Card Management:** Issuing, viewing, partial/full updating, and deleting credit/debit cards linked to bank accounts.
 - **Loans / Credit Lines:** Applying for loans with installment schedules, interest calculations, disbursement into user accounts, and status tracking.
-- **Public Services:** Public directory of ITBANK physical branch offices and a server-alive health check.
+- **Public Services:** Public directory of ITBANK physical branch offices.
 
 ---
 
