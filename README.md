@@ -275,6 +275,28 @@ poetry run python -m src.main
 
 The server will be available at: `http://localhost:8000`
 
+### Running with Docker 🐳
+
+1. **Build the Docker image:**
+   ```bash
+   docker build -t itbank-backend .
+   ```
+
+2. **Run the container:**
+   ```bash
+   docker run -d \
+     --name itbank-backend \
+     -p 8000:8000 \
+     --env-file .env \
+     itbank-backend
+   ```
+
+3. **Check container logs & health:**
+   ```bash
+   docker logs -f itbank-backend
+   docker inspect --format='{{json .State.Health}}' itbank-backend
+   ```
+
 ---
 
 ## 📚 API Documentation

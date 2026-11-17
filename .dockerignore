@@ -1,0 +1,41 @@
+# Git
+.git/
+.gitignore
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases and runtime data
+src/*.db
+src/*.db-journal
+*.sqlite3
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# IDEs and OS files
+.vscode/
+.idea/
+.gemini/
+.DS_Store
+Thumbs.db
+
+# Documentation / tasks
+AGENTS.md
+TODO.md
