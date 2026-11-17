@@ -263,12 +263,21 @@ ENVIRONMENT="development"
 # PostgreSQL (production ready via psycopg):
 # DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/itbank"
 
+# Opt-in database teardown on shutdown (Default: false)
+# PURGE_DATABASE_ON_SHUTDOWN="false"
+
 # JWT Authentication
 AUTH_SECRET_KEY="your-jwt-secret-key-at-least-32-characters"
 ALGORITHM="HS256"
 
 # Frontend CORS Origin
 ITBANK_HOMEBANKING_FRONTEND_URL="http://localhost:3000"
+
+# Optional: Initial Production Admin Bootstrapper (used by src.db.init_db)
+# INITIAL_ADMIN_USERNAME="admin"
+# INITIAL_ADMIN_PASSWORD="admin_secure_password_here"
+# INITIAL_ADMIN_EMAIL="admin@itbank.com"
+# INITIAL_ADMIN_FULL_NAME="ITBANK Administrator"
 ```
 
 > **Note:** A `.env.test` file is already included in the repository with test-specific secrets and `ENVIRONMENT="test"`, loaded automatically by `pytest-dotenv`.

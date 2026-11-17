@@ -316,9 +316,18 @@ erDiagram
    # PostgreSQL (production ready via psycopg):
    # DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/itbank"
 
+   # Opt-in database teardown on shutdown (Default: false)
+   # PURGE_DATABASE_ON_SHUTDOWN="false"
+
    AUTH_SECRET_KEY="your-jwt-secret-key-32-chars-minimum"
    ALGORITHM="HS256"
    ITBANK_HOMEBANKING_FRONTEND_URL="http://localhost:3000"
+
+   # Initial Production Admin Bootstrapper (used by src.db.init_db)
+   # INITIAL_ADMIN_USERNAME="admin"
+   # INITIAL_ADMIN_PASSWORD="admin_secure_password_here"
+   # INITIAL_ADMIN_EMAIL="admin@itbank.com"
+   # INITIAL_ADMIN_FULL_NAME="ITBANK Administrator"
    ```
 
 ### 6.2 Database Lifecycle & Pre-Seeded Test Users
