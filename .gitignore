@@ -8,3 +8,4 @@ src/*.db
 .DS_Store
 .coverage
 TODO.md
+docs/

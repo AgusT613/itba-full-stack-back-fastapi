@@ -36,6 +36,13 @@ src/*.db-journal
 .DS_Store
 Thumbs.db
 
+# Docker files
+Dockerfile*
+docker-compose*
+compose.y*ml
+.dockerignore
+
 # Documentation / tasks
 AGENTS.md
 TODO.md
+docs/
