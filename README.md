@@ -332,6 +332,10 @@ The server will be available at: `http://localhost:8000`
 
 ### Running with Docker 🐳
 
+The container is equipped with [`docker-entrypoint.sh`](docker-entrypoint.sh) which automatically bootstraps database tables, default branch offices, and administrative/seed users before launching Uvicorn:
+- In `ENVIRONMENT="production"`: runs `src.db.init_db` to ensure default branch offices and the initial admin user exist.
+- In `ENVIRONMENT="development"`: runs `src.db.seed` to populate the 3 development test profiles with rich mock data.
+
 1. **Build the Docker image:**
    ```bash
    docker build -t itbank-backend .

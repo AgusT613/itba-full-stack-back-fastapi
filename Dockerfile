@@ -45,11 +45,13 @@ RUN --mount=type=cache,target=/root/.cache/pypoetry \
 # Copy application source code into the builder stage.
 # This makes the builder stage directly runnable in development (see compose.yaml target: builder).
 COPY . .
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Expose default application port
 EXPOSE 8000
 
-# Development command (used when Compose targets 'builder')
+# Development entrypoint & command (used when Compose targets 'builder')
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["/app/.venv/bin/python3", "-m", "uvicorn", "src.main:app", "--host=0.0.0.0", "--port=8000", "--reload"]
 
 
@@ -73,6 +75,8 @@ RUN groupadd -g 1000 appgroup && \
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder --chown=appuser:appgroup /app/src /app/src
 COPY --from=builder --chown=appuser:appgroup /app/pyproject.toml /app/README.md /app/
+COPY --from=builder --chown=appuser:appgroup /app/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Switch to non-root user
 USER appuser
@@ -83,6 +87,9 @@ EXPOSE 8000
 # Health check verifying the FastAPI application is responding
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD /app/.venv/bin/python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')" || exit 1
+
+# Entrypoint bootstraps database, branch offices, and admin before starting uvicorn
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # Production command
 CMD ["/app/.venv/bin/python3", "-m", "uvicorn", "src.main:app", "--host=0.0.0.0", "--port=8000"]

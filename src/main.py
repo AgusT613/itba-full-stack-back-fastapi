@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.constants.constants import ENVIRONMENT, HOMEBANKING_FRONTEND_URL
 from src.db.connection import cleanup_prod_database, create_db_and_tables
+from src.db.init_db import init_production_db
 from src.db.seed import seed_dev_database
 from src.handlers import register_exception_handlers
 from src.routers.routers import api_router
@@ -14,6 +15,8 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     if ENVIRONMENT in ("development", "dev"):
         seed_dev_database()
+    elif ENVIRONMENT in ("production", "prod"):
+        init_production_db()
     yield
     if ENVIRONMENT in ("production", "prod"):
         cleanup_prod_database()

@@ -123,6 +123,8 @@ itba_full_stack_back_fastapi/
 ├── poetry.lock                 # Locked dependency graph
 ├── .env                        # Local development environment configuration
 ├── .env.test                   # Test environment variables
+├── docker-entrypoint.sh        # Container startup bootstrap (admin & branch offices)
+├── Dockerfile                  # Multi-stage production container image
 ├── TODO.md                     # Immediate developer roadmap items
 ├── AGENTS.md                   # AI Developer and Agent Operational Manual (this file)
 ├── src/
